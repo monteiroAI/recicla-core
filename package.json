@@ -1,25 +1,23 @@
 {
-  "name": "recicla",
+  "name": "recicla-gateway-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/gateway-api/server.ts",
+  "description": "Backbone Gateway API - Ecossistema RECICLA",
+  "main": "dist/gateway-api/server.js",
   "scripts": {
-    "start": "ts-node src/gateway-api/server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "fuser -k 3001/tcp 2>/dev/null || true; NODE_ENV=simulation ts-node-dev --respawn --transpile-only src/gateway-api/server.ts",
+    "build": "tsc",
+    "start": "node dist/gateway-api/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "pg": "^8.21.0"
+    "pg": "^8.12.0",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
-    "@types/node": "^25.9.2",
-    "@types/pg": "^8.20.0",
-    "ts-node": "^10.9.2",
+    "@types/node": "^20.14.2",
+    "@types/pg": "^8.11.6",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
   }
 }

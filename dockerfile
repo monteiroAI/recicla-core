@@ -34,3 +34,28 @@ EXPOSE 3000
 
 # Executa diretamente o arquivo TypeScript mapeado
 CMD ["ts-node", "src/gateway-api/server.ts"]
+
+Dockerfile
+/*******************************************************************************
+ * ESTRUTURA PARA ATIVAR: recycle (Infraestrutura de Runtime Isolada)
+ * CAMINHO FÍSICO: /boot/torre/recycle/Dockerfile.dev
+ * CONFIGURAÇÃO: Micro-ambiente Alpine para Node.js / Express (Porta 3001)
+ * STATUS: NOVO ARQUIVO PARA CRIAR
+ *******************************************************************************/
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copia apenas os manifestos locais da pasta atual
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Instalação limpa isolada de qualquer contaminação do host
+RUN npm install
+
+COPY . .
+
+EXPOSE 3001
+
+CMD ["npx", "ts-node", "src/gateway-api/server.ts"]

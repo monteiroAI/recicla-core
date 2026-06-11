@@ -1,97 +1,114 @@
 /*******************************************************************************
  * ESTRUTURA PARA ATIVAR: recicla (Backend Core Engine)
  * CAMINHO FÍSICO: /boot/torre/recicla/src/gateway-api/server.ts
- * CONFIGURAÇÃO: Node.js / TypeScript Express Server (Porta 3001)
- * STATUS: REVERTIDO E PACIFICADO COMO RECICLA
+ * CONFIGURAÇÃO: Nível 4 - Camada de Persistência Física (Banda Simulation)
+ * STATUS: PRONTO PARA INTERCONEXÃO REAL
  *******************************************************************************/
 
 import express, { Request, Response } from 'express';
-import cors from 'cors';
+import { Pool } from 'pg'; // Assegure que o Pool de conexão do Postgres está ativo
 
 const app = express();
-const PORT = 3001;
-
-app.use(cors());
 app.use(express.json());
 
-// Log de Auditoria unificado sob o escopo estável do recicla
-app.use((req, res, next) => {
-  console.log(`[🛰️ RECICLA TRAFFIC] ${new Date().toISOString()} | ${req.method} ➔ ${req.url}`);
-  next();
-});
+// Força o escopo de transações para a banda/schema de simulação do banco mrvTRUST
+const schemaAtivo = "simulation";
 
-const STATE_SEQUENCE = [
-  'T1_INICIO_MISSAO',
-  'T2_BALANCA_VAZIO',
-  'T3_LOCAL_COLETA_CARGA',
-  'T4_TRANSPORTE_RESIDUO',
-  'T5_PROCEDIMENTO_DESCARGA',
-  'T6_MISSAO_ENCERRADA'
-];
-
-function isValidStateTransition(currentState: string, nextState: string): boolean {
-  const currentIndex = STATE_SEQUENCE.indexOf(currentState);
-  const nextIndex = STATE_SEQUENCE.indexOf(nextState);
-  return currentIndex !== -1 && nextIndex === (currentIndex + 1);
+// Função genérica de execução na rocha que você já possui ou está mapeada no core
+async function executarQuery(textoQuery: string, parametros: any[]) {
+  // Configura o search_path dinamicamente para garantir que estamos na banda de simulação
+  const pool = new Pool(); // Conexão com as credenciais do seu recicla-db-1
+  const client = await pool.connect();
+  try {
+    await client.query(`SET search_path TO ${schemaAtivo};`);
+    const res = await client.query(textoQuery, parametros);
+    return res;
+  } finally {
+    client.release();
+  }
 }
 
 // ====================================================================
-// ROTAS DA VERTICAL CORP (Sincronizadas com o KtorHttpClient do Mobile)
+// ENDPOINTS RECONFIGURADOS PARA ALIMENTAR A ROCHA DO BANCO
 // ====================================================================
 
 /**
- * 📱 POST /api/corp/missions/:id/resolution
+ * 📱 POST /api/corp/missions/:id/resolution (TELA 1 - Handshake)
  */
 app.post('/api/corp/missions/:id/resolution', async (req: Request, res: Response) => {
   const missionId = req.params.id;
-  const { eventId, userId, resolution, timestampUtc, gpsCoordinates, justificationText } = req.body;
+  const { eventId, userId, resolution, justificationText, gpsCoordinates } = req.body;
 
-  if (resolution === 'DECLINED_UNAVAILABLE' && (!justificationText || justificationText.trim() === '')) {
-    return res.status(400).json({ 
-      error: 'Inconsistência Forense: Recusa de missão exige relatório textual de justificativa.' 
+  try {
+    if (resolution === 'DECLINED_UNAVAILABLE' && (!justificationText || justificationText.trim() === '')) {
+      return res.status(400).json({ error: 'Erro Forense: Recusa exige justificativa por escrito.' });
+    }
+
+    const statusMapeado = resolution === 'ACCEPTED_AND_READY' ? 'em-andamento' : 'recusada';
+    const lat = gpsCoordinates?.latitude || null;
+    const lng = gpsCoordinates?.longitude || null;
+
+    // Persistência física na banda simulation
+    const sql = `
+      UPDATE corp_missoes 
+      SET status = $1, 
+          justificativa_recusa = $2, 
+          latitude_aceite = $3, 
+          longitude_aceite = $4,
+          updated_at = NOW()
+      WHERE id = $5 RETURNING *;
+    `;
+    
+    const resultado = await executarQuery(sql, [statusMapeado, justificationText || null, lat, lng, missionId]);
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Erro: ID de Missão não cadastrado na banda simulation.' });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Recibo forense gravado com sucesso no PostgreSQL (Banda Simulation)',
+      eventId,
+      record: resultado.rows[0]
     });
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Falha crítica de I/O no banco', details: error.message });
   }
-
-  const dbStatus = resolution === 'ACCEPTED_AND_READY' ? 'em-transito' : 'recusada';
-  console.log(`[🟢 RESOLUTION LOCKED] Missão [${missionId}] ➔ [${dbStatus}] processada no barramento recicla.`);
-
-  return res.status(201).json({
-    success: true,
-    message: 'Recibo de integridade forense emitido pelo mrvTRUST',
-    eventId: eventId,
-    status_gravado: dbStatus
-  });
 });
 
 /**
- * 📱 POST /api/corp/missions/:id/transition
+ * 📱 POST /api/corp/missions/:missionId/evidences/:evidenceId (Ingestão IoT)
  */
-app.post('/api/corp/missions/:id/transition', async (req: Request, res: Response) => {
-  const missionId = req.params.id;
-  const { currentState, nextState, evidenceCaptured } = req.body;
+app.post('/api/corp/missions/:missionId/evidences/:evidenceId', async (req: Request, res: Response) => {
+  const { missionId, evidenceId } = req.params;
+  const { voyageId, step, weightKg, evidenceUrl, gpsCoordinates, dataSource, scaleDeviceId, rawScaleString } = req.body;
 
-  if (!evidenceCaptured && nextState !== 'T4_TRANSPORTE_RESIDUO') {
-    return res.status(400).json({ 
-      error: 'Bloqueio de Gate: Impossível avançar sem capturar a evidência física.' 
+  try {
+    if (dataSource === 'iot_serial_ble' && (!scaleDeviceId || !rawScaleString)) {
+      return res.status(400).json({ error: 'Fraude abortada: Dados IoT sem assinatura física.' });
+    }
+
+    // Escrita física das evidências e strings de hardware na rocha do banco
+    const sql = `
+      INSERT INTO corp_missoes_evidencias (
+        id_evidencia, missao_id, viagem_id, etapa, peso_kg, evidencia_url, 
+        latitude, longitude, data_origin, scale_device_id, raw_scale_string, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+      RETURNING *;
+    `;
+
+    const resultado = await executarQuery(sql, [
+      evidenceId, missionId, voyageId, step, weightKg, evidenceUrl,
+      gpsCoordinates?.latitude || null, gpsCoordinates?.longitude || null,
+      dataSource, scaleDeviceId, rawScaleString
+    ]);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Envelope IoT injetado fisicamente e validado na banda simulation.',
+      storedData: resultado.rows[0]
     });
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Erro ao persistir evidência no PostgreSQL', details: error.message });
   }
-
-  if (!isValidStateTransition(currentState, nextState)) {
-    return res.status(400).json({ 
-      error: `Violação de fluxo abortada pelo mrvTRUST: Transição de ${currentState} para ${nextState} é ilegal.` 
-    });
-  }
-
-  console.log(`[🟢 STATE TRANSITIONED] Missão [${missionId}]: ${currentState} ➔ ${nextState}`);
-
-  return res.status(200).json({
-    success: true,
-    message: `Transição para ${nextState} homologada com sucesso.`
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`\n======================================================================`);
-  console.log(`🚀 recicla Core Engine ativado com sucesso nativo na porta [${PORT}]`);
-  console.log(`======================================================================`);
 });

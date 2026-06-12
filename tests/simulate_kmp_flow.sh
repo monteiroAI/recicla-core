@@ -2,47 +2,102 @@
 # ===============================================================================
 # ESTRUTURA PARA ATIVAR: recicla (Ambiente de Testes / Terminal Host)
 # CAMINHO FÍSICO: /boot/torre/recicla/tests/simulate_kmp_flow.sh
-# CONFIGURAÇÃO: Shell Script executável nativo do Bash
-# STATUS: CORRIGIDO E APONTANDO PARA RECICLA
+# CONFIGURAÇÃO: Shell Script nativo Bash - Suite Multicidades (Santo André & Mauá)
+# STATUS: TOTALMENTE ATUALIZADO PARA FASE C REAL
 # ===============================================================================
 
 API_URL="http://localhost:3001/api/corp"
-MISSION_ID="uuid-missao-2026-b2b"
 
 echo "======================================================================"
-echo "🚀 INICIANDO EMULAÇÃO FORENSE DE FLUXO KMP VIA TERMINAL"
+echo "🏗️ INICIANDO EMULAÇÃO DA OPERAÇÃO REAL REGIONAL — AMBIENTE MULTICIDADES"
 echo "======================================================================"
 
-echo -e "\n1️⃣ Simulando TELA 1: Envio de MissionResolutionEnvelope (Aceite da OS)"
-curl -X POST "$API_URL/missions/$MISSION_ID/resolution" \
+# ---------------------------------------------------------------------
+# 🏙️ CIDADE 1: SANTO ANDRÉ — OPERAÇÃO METALFINO (CLASSE I)
+# ---------------------------------------------------------------------
+echo -e "\n📍 [SANTO ANDRÉ] ➔ Processando Fluxo da Fábrica Metalfino (Missão: missao-metalfino)"
+
+echo -e "  1️⃣ Handshake Inicial T1 (Aceite da Ordem de Serviço)"
+curl -s -X POST "$API_URL/missions/missao-metalfino/resolution" \
   -H "Content-Type: application/json" \
   -d '{
-    "eventId": "evt_998877_test",
-    "missionId": "'"$MISSION_ID"'",
+    "eventId": "evt-res-sa-001",
     "userId": "usr_driver_monteiro",
     "resolution": "ACCEPTED_AND_READY",
-    "timestampUtc": "2026-06-11T16:20:00Z",
-    "gpsCoordinates": { "latitude": -23.55052, "longitude": -46.633308 }
-  }'
+    "gpsCoordinates": { "latitude": -23.6542, "longitude": -46.5312 }
+  }' | grep -o '"message":[^,]*'
 
-echo -e "\n\n2️⃣ Simulando Validação de Hard Lock: Tentativa Ilegal de Pular de T1 para T3"
-curl -X POST "$API_URL/missions/$MISSION_ID/transition" \
+echo -e "  2️⃣ Teste de Segurança: Tentativa Ilegal de Pular de T1 direto para T3 (Local de Carga)"
+curl -s -X POST "$API_URL/missions/missao-metalfino/transition" \
   -H "Content-Type: application/json" \
   -d '{
     "currentState": "T1_INICIO_MISSAO",
     "nextState": "T3_LOCAL_COLETA_CARGA",
     "evidenceCaptured": true
-  }'
+  }' | grep -o '"error":[^,]*'
 
-echo -e "\n\n3️⃣ Simulando Avanço Legal Sequencial: Transição Homologada de T1 para T2"
-curl -X POST "$API_URL/missions/$MISSION_ID/transition" \
+echo -e "  3️⃣ Ingestão de Envelope da Balança IoT Bluetooth — Pesagem de Tara Vazio (T2)"
+curl -s -X POST "$API_URL/missions/missao-metalfino/evidences/ev-tara-sa-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "voyageId": "viagem-sa-001",
+    "step": "T2_BALANCA_VAZIO",
+    "weightKg": 14500,
+    "evidenceUrl": "https://storage.mrvtrust.com/evidences/tara_sa.jpg",
+    "gpsCoordinates": { "latitude": -23.6545, "longitude": -46.5315 },
+    "dataSource": "iot_serial_ble",
+    "scaleDeviceId": "HW_TOLEDO_ST400_SA",
+    "rawScaleString": "ST,GS,14500,KG\\r\\n"
+  }' | grep -o '"message":[^,]*'
+
+echo -e "  4️⃣ Transição Legal Sequencial de Estados na Rocha (T1 ➔ T2)"
+curl -s -X POST "$API_URL/missions/missao-metalfino/transition" \
   -H "Content-Type: application/json" \
   -d '{
     "currentState": "T1_INICIO_MISSAO",
     "nextState": "T2_BALANCA_VAZIO",
     "evidenceCaptured": true
-  }'
+  }' | grep -o '"message":[^,]*'
 
-echo -e "\n\n======================================================================"
-echo "🏁 FIM DA SIMULAÇÃO DE GATES PROBÁTORIOS"
+
+# ---------------------------------------------------------------------
+# 🏙️ CIDADE 2: MAUÁ — OPERAÇÃO PETROMAUÁ (CLASSE I PESADO)
+# ---------------------------------------------------------------------
+echo -e "\n📍 [MAUÁ] ➔ Processando Fluxo do Polo Petroquímico (Missão: missao-petromaua)"
+
+echo -e "  1️⃣ Handshake Inicial T1 (Aceite de Ordem de Serviço de Borra/Solvente)"
+curl -s -X POST "$API_URL/missions/missao-petromaua/resolution" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eventId": "evt-res-maua-002",
+    "userId": "usr_driver_silva",
+    "resolution": "ACCEPTED_AND_READY",
+    "gpsCoordinates": { "latitude": -23.6678, "longitude": -46.4614 }
+  }' | grep -o '"message":[^,]*'
+
+echo -e "  2️⃣ Ingestão de Envelope da Balança IoT — Pesagem de Tara Vazio Mauá (T2)"
+curl -s -X POST "$API_URL/missions/missao-petromaua/evidences/ev-tara-maua-02" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "voyageId": "viagem-maua-001",
+    "step": "T2_BALANCA_VAZIO",
+    "weightKg": 18200,
+    "evidenceUrl": "https://storage.mrvtrust.com/evidences/tara_maua.jpg",
+    "gpsCoordinates": { "latitude": -23.6680, "longitude": -46.4616 },
+    "dataSource": "iot_serial_ble",
+    "scaleDeviceId": "HW_FILIZOLA_E120_MAUA",
+    "rawScaleString": "ST,GS,18200,KG\\r\\n"
+  }' | grep -o '"message":[^,]*'
+
+echo -e "  3️⃣ Transição Legal Sequencial de Estados na Rocha (T1 ➔ T2)"
+curl -s -X POST "$API_URL/missions/missao-petromaua/transition" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currentState": "T1_INICIO_MISSAO",
+    "nextState": "T2_BALANCA_VAZIO",
+    "evidenceCaptured": true
+  }' | grep -o '"message":[^,]*'
+
+echo -e "\n======================================================================"
+echo "🏁 FIM DA SIMULAÇÃO OPERACIONAL REGIONALIZADA"
 echo "======================================================================"

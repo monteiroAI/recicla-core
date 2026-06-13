@@ -1,204 +1,151 @@
 /*******************************************************************************
- * ESTRUTURA PARA ATIVAR: recicla (Backend Core Engine)
+ * ECOSSISTEMA DE RASTREABILIDADE LOGÍSTICA RECICLA (BACKEND CORE ENGINE)
  * CAMINHO FÍSICO: /boot/torre/recicla/src/gateway-api/server.ts
- * CONFIGURAÇÃO: Endpoints de Alimentação dos Dashboards (Sankey, Corp, City, Region)
- * STATUS: INTEGRADO E BLINDADO CONTRA ERROS DE I/O
+ * CONFIGURAÇÃO: Regra Dinâmica do Sankey Horizontal e Janela 26 a 25
+ * REQUISITO EXTRA: Acoplamento Cross-Cutting do Roteador de Schema (Camada Shared)
  *******************************************************************************/
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 
+// Importação do barramento global de infraestrutura compartilhada (Shared Infra)
+import systemRouter from '../shared/infra/http/routes/system.routes';
+
 const app = express();
-const PORT = 3001;
+const pool = new Pool();
 
 app.use(cors());
 app.use(express.json());
 
-const schemaAtivo = "simulation";
-const pool = new Pool();
+/*******************************************************************************
+ * 🗺️ BARRAMENTO GLOBAL DE INFRAESTRUTURA (CROSS-CUTTING SHARED)
+ * Disponibiliza /api/v1/system/config/status para o indicador visual do HTML
+ *******************************************************************************/
+app.use('/api/v1', systemRouter);
 
-// Função centralizada com Search Path forçado na banda de simulação
-async function executarQuery(textoQuery: string, parametros: any[]) {
+
+/*******************************************************************************
+ * 📊 SEÇÃO DE ANALYTICS AVANÇADO — COOP. ANDRÉ
+ *******************************************************************************/
+
+/**
+ * Helper para calcular as datas limites do mês de competência (Dia 26 a 25)
+ * Se o usuário pedir Ano=2026 e Mês=06 (Junho/2026), a janela será: 26/05/2026 até 25/06/2026
+ */
+function obterJanelaCompetencia(ano: number, mes: number) {
+  const dataInicio = new Date(ano, mes - 2, 26, 0, 0, 0);
+  const dataFim = new Date(ano, mes - 1, 25, 23, 59, 59);
+  return { 
+    inicio: dataInicio.toISOString().split('T')[0] + ' 00:00:00', 
+    fim: dataFim.toISOString().split('T')[0] + ' 23:59:59' 
+  };
+}
+
+/**
+ * Helper para isolar a execução de queries garantindo a busca no schema simulation
+ */
+async function executarQuery(sql: string, params: any[]) {
   const client = await pool.connect();
   try {
-    await client.query(`SET search_path TO ${schemaAtivo};`);
-    return await client.query(textoQuery, parametros);
+    await client.query("SET search_path TO simulation;");
+    return await client.query(sql, params);
   } finally {
     client.release();
   }
 }
 
-// =============================================================================
-// 🔀 ENDPOINT 1: SANKEY BALANÇO DE MASSA (CONSOLIDATION & PÁTIO)
-// =============================================================================
 /**
- * GET /api/analytics/sankey-mass-balance
- * Fornece a matriz de nós e elos (links) para renderizar o gráfico Sankey.
- * Mapeia o fluxo físico: Gerador ➔ Cooperativa ➔ Tipo de Material/Rejeito
+ * 🔀 GET /api/analytics/sankey-mass-balance
+ * Fornece os nós horizontais obedecendo a regra de bypass e a janela temporal
  */
 app.get('/api/analytics/sankey-mass-balance', async (req: Request, res: Response) => {
+  const ano = parseInt(req.query.ano as string) || 2026;
+  const mes = parseInt(req.query.mes as string) || 6; // Junho como padrão de teste
+  const { inicio, fim } = obterJanelaCompetencia(ano, mes);
+
   try {
     const sql = `
-      -- Fluxo A: Dos Clientes/Geradores para as Cooperativas
+      -- FLUXO 1: Canais de Secos para a TRIAGEM (Exclui Catadores)
       SELECT 
-        cli.nome_fantasia AS source,
-        coop.nome_fantasia AS target,
+        CASE 
+          WHEN pes.origem_material = 'domiciliar_seletiva' THEN 'Coleta Pública Domiciliar'
+          WHEN pes.origem_material = 'grande_gerador' THEN 'Grandes Geradores'
+          ELSE 'Zeladoria Municipal'
+        END AS source,
+        'Operação de TRIAGEM (Esteira)' AS target,
         SUM(pes.peso_bruto_entrada) / 1000.0 AS value
       FROM cons_pesagens_cooperativa pes
-      JOIN cons_cooperativas coop ON coop.id = pes.id_cooperativa
-      JOIN corp_missoes mis ON mis.id = pes.id_missao_origem
-      JOIN corp_ordens_servico os ON os.id = mis.id_ordem_servico
-      JOIN corp_contratos con ON con.id = os.id_contrato
-      JOIN corp_clientes cli ON cli.id = con.id_cliente
-      GROUP BY cli.nome_fantasia, coop.nome_fantasia
+      WHERE pes.origem_material <> 'catador_autonomo'
+        AND pes.created_at BETWEEN $1 AND $2
+      GROUP BY source
       
       UNION ALL
       
-      -- Fluxo B: Das Cooperativas de Secos para a Matéria-Secunda Triada
+      -- FLUXO 2: BYPASS REAL - Catadores pulam a Triagem e vão direto para o Output de Tipo
       SELECT 
-        coop.nome_fantasia AS source,
+        'Catadores e Catadoras' AS source,
         fardos.tipo_material AS target,
         SUM(fardos.peso_liquido_kg) / 1000.0 AS value
       FROM cons_triagem_fardos fardos
-      JOIN cons_cooperativas coop ON coop.id = fardos.id_cooperativa
-      GROUP BY coop.nome_fantasia, fardos.tipo_material
+      JOIN cons_pesagens_cooperativa pes ON pes.id_cooperativa = fardos.id_cooperativa
+      WHERE pes.origem_material = 'catador_autonomo'
+        AND fardos.created_at BETWEEN $1 AND $2
+      GROUP BY fardos.tipo_material
       
       UNION ALL
       
-      -- Fluxo C: Dos Pátios de Orgânicos para o Composto Final Concluído
+      -- FLUXO 3: Da TRIAGEM para os Outputs Finais de Materiais e Rejeitos
       SELECT 
-        coop.nome_fantasia AS source,
+        'Operação de TRIAGEM (Esteira)' AS source,
+        fardos.tipo_material AS target,
+        SUM(fardos.peso_liquido_kg) / 1000.0 AS value
+      FROM cons_triagem_fardos fardos
+      JOIN cons_pesagens_cooperativa pes ON pes.id_cooperativa = fardos.id_cooperativa
+      WHERE pes.origem_material <> 'catador_autonomo'
+        AND fardos.created_at BETWEEN $1 AND $2
+      GROUP BY fardos.tipo_material
+      
+      UNION ALL
+      
+      -- FLUXO 4: Canais de Orgânicos para o processo de COMPOSTAGEM
+      SELECT 
+        CASE 
+          WHEN leiras.codigo_leira LIKE '%PROP%' THEN 'Coleta Própria'
+          WHEN leiras.codigo_leira LIKE '%ZEL%' THEN 'Zeladoria Municipal (Orgânica)'
+          ELSE 'Coleta Pública Domiciliar (Orgânica)'
+        END AS source,
+        'Processo de Compostagem (Pátio)' AS target,
+        SUM(leiras.peso_organicos_acumulado_kg) / 1000.0 AS value
+      FROM cons_leiras_compostagem leiras
+      WHERE leiras.created_at BETWEEN $1 AND $2
+      GROUP BY source
+      
+      UNION ALL
+      
+      -- FLUXO 5: Da COMPOSTAGEM para o Output Final de Composto Orgânico
+      SELECT 
+        'Processo de Compostagem (Pátio)' AS source,
         'Composto Orgânico Estabilizado' AS target,
         SUM(leiras.peso_composto_final_kg) / 1000.0 AS value
       FROM cons_leiras_compostagem leiras
-      JOIN cons_cooperativas coop ON coop.id = leiras.id_cooperativa
       WHERE leiras.status_leira = 'CONCLUIDA'
-      GROUP BY coop.nome_fantasia
-      
-      UNION ALL
-      
-      -- Fluxo D: Destinação de Rejeito não aproveitado para Aterro Sanitário
-      SELECT 
-        coop.nome_fantasia AS source,
-        'Aterro Sanitário Licenciado (Rejeito)' AS target,
-        SUM(pes.peso_rejeito_aterro) / 1000.0 AS value
-      FROM cons_pesagens_cooperativa pes
-      JOIN cons_cooperativas coop ON coop.id = pes.id_cooperativa
-      GROUP BY coop.nome_fantasia;
+        AND leiras.updated_at BETWEEN $1 AND $2
+      GROUP BY source;
     `;
 
-    const resultado = await executarQuery(sql, []);
-    
-    return res.status(200).json({
-      success: true,
-      graph: "Sankey Diagram Payload",
-      links: resultado.rows
-    });
+    const resultado = await executarQuery(sql, [inicio, fim]);
+    return res.status(200).json({ success: true, periodo: { inicio, fim }, links: resultado.rows });
   } catch (error: any) {
-    return res.status(500).json({ error: 'Erro ao gerar matriz Sankey', details: error.message });
+    return res.status(500).json({ error: 'Erro ao consolidar regras horizontais do Sankey', details: error.message });
   }
 });
 
-// =============================================================================
-// 🏢 ENDPOINT 2: DASHBOARD OPERADOR LOGÍSTICO (OPERATOR - VISÃO DE FROTA)
-// =============================================================================
-/**
- * GET /api/analytics/operator-fleet
- * Exibe a produtividade em tempo real dos motoristas, pesos IoT e alertas de GPS
- */
-app.get('/api/analytics/operator-fleet', async (req: Request, res: Response) => {
-  try {
-    const sql = `
-      SELECT 
-        mis.id AS missao_id,
-        mis.codigo_os,
-        mis.cliente_corp AS cliente,
-        mis.status_operacional AS etapa_atual,
-        ev.id_viagem AS viagem,
-        ev.data_origin AS motorista,
-        ev.scale_device_id AS equipamento_balanca,
-        ev.peso_kg AS toneladas_retiradas,
-        ev.created_at AS data_hora
-      FROM corp_missoes mis
-      LEFT JOIN corp_missoes_evidencias ev ON ev.id_missao = mis.id
-      ORDER BY ev.created_at DESC;
-    `;
-    const resultado = await executarQuery(sql, []);
-    return res.status(200).json({ success: true, dashboard: "Operator Fleet Vision", records: resultado.rows });
-  } catch (error: any) {
-    return res.status(500).json({ error: 'Erro no dashboard do operador', details: error.message });
-  }
-});
-
-// =============================================================================
-// 🏭 ENDPOINT 3: DASHBOARD CLIENTE GERADOR (CORP GENERATOR - CONFORMIDADE ESG)
-// =============================================================================
-/**
- * GET /api/analytics/generator-esg/:clienteId
- * Fornece a pegada de descarte, rastreio de MTRs e o CO2 efetivo verificado na indústria
- */
-app.get('/api/analytics/generator-esg/:clienteId', async (req: Request, res: Response) => {
-  const cliId = req.params.clienteId;
-  try {
-    const sql = `
-      SELECT 
-        cli.nome_fantasia AS empresa,
-        COUNT(os.id) AS total_ordens_despachadas,
-        COALESCE(SUM(fardos.peso_liquido_kg), 0) AS total_massa_destinada_kg,
-        COALESCE(SUM(fardos.potencial_co2_evitado_ton), 0) AS pegada_carbono_potencial_ton,
-        -- Totalização do Carbono Real Liquidado na Indústria Transformadora
-        COALESCE((
-          SELECT SUM(liq.co2_efetivamente_evitado_ton)
-          FROM ind_liquidacao_mtr liq
-          WHERE liq.id_fardo_origem IN (SELECT id_fardo FROM cons_triagem_fardos WHERE id_cooperativa = coop.id)
-        ), 0) AS co2_efetivamente_evitado_verificado_ton
-      FROM corp_clientes cli
-      JOIN corp_contratos con ON con.id_cliente = cli.id
-      JOIN corp_ordens_servico os ON os.id_contrato = con.id
-      LEFT JOIN cons_cooperativas coop ON coop.id_municipio = cli.id_municipio
-      LEFT JOIN cons_triagem_fardos fardos ON fardos.id_cooperativa = coop.id
-      WHERE cli.id = $1
-      GROUP BY cli.nome_fantasia, coop.id;
-    `;
-    const resultado = await executarQuery(sql, [cliId]);
-    return res.status(200).json({ success: true, dashboard: "corpGenerator ESG Vision", metrics: resultado.rows[0] || {} });
-  } catch (error: any) {
-    return res.status(500).json({ error: 'Erro no dashboard do gerador', details: error.message });
-  }
-});
-
-// =============================================================================
-// 🏙️ ENDPOINT 4: MACRO GESTÃO GOVERNAMENTAL (CITY VISION & REGIONAL POOL)
-// =============================================================================
-/**
- * GET /api/analytics/regional-governance
- * Alimenta a visão pública das Secretarias Municipais e do Consórcio Intermunicipal do ABC
- * Monitora o Pool de Acumulação Comercial em direção à barreira crítica de 10k toneladas
- */
-app.get('/api/analytics/regional-governance', async (req: Request, res: Response) => {
-  try {
-    const sql = `
-      SELECT 
-        pool.codigo_lote AS codigo_pool,
-        pool.regiao_escopo AS consorcio_regional,
-        pool.potencial_co2_acumulado_ton AS toneladas_acumuladas_pool,
-        pool.status_pool,
-        m.nome AS municipio,
-        COALESCE(SUM(coop.postos_trabalho), 0) AS postos_trabalho_esg,
-        COALESCE(SUM(coop.renda_mensal_estimada), 0) AS renda_comunitaria_reais
-      FROM fin_pool_carbono pool
-      CROSS JOIN geo_municipios m
-      LEFT JOIN cons_cooperativas coop ON coop.id_municipio = m.id
-      GROUP BY pool.id_pool, pool.codigo_lote, pool.regiao_escopo, pool.potencial_co2_acumulado_ton, pool.status_pool, m.nome;
-    `;
-    const resultado = await executarQuery(sql, []);
-    return res.status(200).json({ success: true, dashboard: "City and Regional Governance Vision", data: resultado.rows });
-  } catch (error: any) {
-    return res.status(500).json({ error: 'Erro no dashboard de governança regional', details: error.message });
-  }
-});
-
+/*******************************************************************************
+ * BOOTSTRAP INITIALIZER
+ *******************************************************************************/
+const PORT = 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Motores de Analytics Ativados com Sucesso na Porta [${PORT}]`);
+  console.log(`🚀 [Gateway API Recicla] Escutando e roteando na porta ${PORT}`);
+  console.log(`⚙️  Camada Shared incorporada à malha global de controle.`);
 });

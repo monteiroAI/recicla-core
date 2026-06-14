@@ -5,19 +5,115 @@
 # DIRETRIZ: Garantir injeção limpa para execução da Jornada do Herói
 # ===============================================================================
 
-API_URL="http://localhost:3001/api/v1"
+API_URL="http://localhost:3000/api/v1/mobile"
 UUID_MISSAO="jornada-gplaza-forensic-2026"
 ID_MOTORISTA="MOT-MONTEIRO-01"
 
 # 🔑 CREDENCIAIS HISTÓRICAS EXTRAÍDAS DO DOCKER INSPECT
 DB_USER="recicla_user"
-DB_NAME="postgres" # Caso sua aplicação use um banco com o nome 'recicla', mude aqui.
+DB_NAME="recicla"
 
 echo "🧹 [1/7] Expurgando tabelas e preparando o pátio com o usuário legítimo ($DB_USER)..."
 docker exec -i recicla-db-1 psql -U $DB_USER -d $DB_NAME <<EOF
 SET search_path TO simulation;
 
--- Garante a existência da tabela limpa na base central do Recicla
+-- Ajustes de esquema para a simulação física de pesagem biunívoca
+ALTER TABLE IF EXISTS cons_pesagens_cooperativa
+  ADD COLUMN IF NOT EXISTS peso_entrada NUMERIC,
+  ADD COLUMN IF NOT EXISTS peso_saida NUMERIC,
+  ADD COLUMN IF NOT EXISTS peso_liquido NUMERIC,
+  ADD COLUMN IF NOT EXISTS vertical_classificacao VARCHAR(50);
+
+ALTER TABLE IF EXISTS corp_missoes
+  ADD COLUMN IF NOT EXISTS status_validacao VARCHAR(50);
+
+-- Garante a existência de tabelas de recepção real do processo CORP
+CREATE TABLE IF NOT EXISTS corp_clientes (
+    id VARCHAR(50) PRIMARY KEY,
+    id_operador VARCHAR(50),
+    id_municipio VARCHAR(50),
+    nome_fantasia VARCHAR(150) NOT NULL,
+    classe_residuo_predominante VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS corp_contratos (
+    id VARCHAR(50) PRIMARY KEY,
+    id_cliente VARCHAR(50) REFERENCES corp_clientes(id),
+    coletas_semanais INTEGER NOT NULL,
+    descricao_operacao TEXT
+);
+
+CREATE TABLE IF NOT EXISTS corp_ordens_servico (
+    id VARCHAR(50) PRIMARY KEY,
+    id_contrato VARCHAR(50) REFERENCES corp_contratos(id),
+    codigo_so VARCHAR(50) NOT NULL,
+    tipo_residuo VARCHAR(150) NOT NULL,
+    status_so VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS corp_missoes (
+    id VARCHAR(50) PRIMARY KEY,
+    id_ordem_servico VARCHAR(50) REFERENCES corp_ordens_servico(id),
+    codigo_os VARCHAR(50) NOT NULL,
+    cliente_corp VARCHAR(150) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    status_operacional VARCHAR(50) NOT NULL,
+    status_validacao VARCHAR(50),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cons_cooperativas (
+    id VARCHAR(50) PRIMARY KEY,
+    id_municipio VARCHAR(50),
+    nome_fantasia VARCHAR(150) NOT NULL,
+    tipo_operador VARCHAR(50) NOT NULL,
+    postos_trabalho INTEGER NOT NULL
+);
+
+-- Limpeza seletiva do cenário de simulação de recepção
+TRUNCATE TABLE corp_missoes RESTART IDENTITY CASCADE;
+TRUNCATE TABLE corp_ordens_servico RESTART IDENTITY CASCADE;
+TRUNCATE TABLE corp_contratos RESTART IDENTITY CASCADE;
+TRUNCATE TABLE corp_clientes RESTART IDENTITY CASCADE;
+TRUNCATE TABLE cons_pesagens_cooperativa RESTART IDENTITY CASCADE;
+TRUNCATE TABLE cons_cooperativas RESTART IDENTITY CASCADE;
+
+-- Cria cliente Classe II e contrato/ordem de serviço associados
+INSERT INTO corp_clientes (id, id_operador, id_municipio, nome_fantasia, classe_residuo_predominante)
+VALUES ('CLIENTE_TESTE_CLASSE_II', NULL, NULL, 'Cliente Teste Classe II', 'CLASSE_II')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO corp_contratos (id, id_cliente, coletas_semanais, descricao_operacao)
+VALUES ('CONTRATO_TESTE_CLASSE_II', 'CLIENTE_TESTE_CLASSE_II', 1, 'Contrato teste Classe II')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO corp_ordens_servico (id, id_contrato, codigo_so, tipo_residuo, status_so)
+VALUES ('OS_TESTE_CLASSE_II', 'CONTRATO_TESTE_CLASSE_II', 'OS-CLASSE-II-001', 'CLASSE_II', 'ABERTA')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO corp_missoes (id, id_ordem_servico, codigo_os, cliente_corp, status, status_operacional, created_at, updated_at)
+VALUES ('MISSAO_TESTE_CLASSE_II_1', 'OS_TESTE_CLASSE_II', 'OS-CLASSE-II-001', 'CLIENTE_TESTE_CLASSE_II', 'EM_TRANSITO', 'AGUARDANDO_DESCARGA', '2026-06-05 09:00:00', '2026-06-05 09:00:00'),
+       ('MISSAO_TESTE_CLASSE_II_2', 'OS_TESTE_CLASSE_II', 'OS-CLASSE-II-001', 'CLIENTE_TESTE_CLASSE_II', 'EM_TRANSITO', 'AGUARDANDO_DESCARGA', '2026-06-05 09:30:00', '2026-06-05 09:30:00')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO cons_cooperativas (id, id_municipio, nome_fantasia, tipo_operador, postos_trabalho)
+VALUES ('COOP_TESTE_CLASSE_II', NULL, 'Cooperativa Teste Classe II', 'COOPERATIVA', 5)
+ON CONFLICT (id) DO NOTHING;
+
+-- Simulação física de pesagem biunívoca na recepção do pátio
+INSERT INTO cons_pesagens_cooperativa (id_registro, id_cooperativa, id_missao_origem, origem_material, peso_bruto_entrada, peso_entrada, peso_saida, peso_liquido, vertical_classificacao, peso_rejeito_aterro, created_at)
+VALUES
+  ('PESAGEM_TESTE_450', 'COOP_TESTE_CLASSE_II', 'MISSAO_TESTE_CLASSE_II_1', 'grande_gerador', 12450, 12450, 12000, 450, 'GRANDES_GERADORES', 0, '2026-06-05 12:00:00'),
+  ('PESAGEM_TESTE_320', 'COOP_TESTE_CLASSE_II', 'MISSAO_TESTE_CLASSE_II_2', 'domiciliar_seletiva', 3200, 3200, 2880, 320, 'COLETA_PUBLICA', 0, '2026-06-05 13:00:00')
+ON CONFLICT (id_registro) DO NOTHING;
+
+-- Consistência do MTR/Manifesto para confirmar a conferência de pátio
+UPDATE corp_missoes
+SET status_validacao = 'CONSOLIDADO_CORP', status_operacional = 'CONSOLIDADO_CORP', status = 'VALIDADO'
+WHERE id IN ('MISSAO_TESTE_CLASSE_II_1', 'MISSAO_TESTE_CLASSE_II_2');
+
+-- Preserva o fluxo mobile existente usado pelo simulador de jornada
 CREATE TABLE IF NOT EXISTS recicla_missoes (
     id SERIAL PRIMARY KEY,
     uuid_missao VARCHAR(64) UNIQUE NOT NULL,
@@ -55,17 +151,15 @@ CREATE TABLE IF NOT EXISTS recicla_missoes_evidencias (
     data_recebimento_backend TIMESTAMP DEFAULT NOW()
 );
 
--- Executa a limpeza sem travas de integridade
 TRUNCATE TABLE recicla_missoes RESTART IDENTITY CASCADE;
 TRUNCATE TABLE recicla_missoes_evidencias RESTART IDENTITY CASCADE;
 
--- Injeção do Estado 0 (Abertura da O.S. pela Coordenação da PGRS)
 INSERT INTO recicla_missoes (uuid_missao, id_motorista, veiculo_placa, cliente_nome, id_destino, classe_residuo, status_missao, data_criacao, cliente_latitude, cliente_longitude)
-VALUES ('$UUID_MISSAO', '$ID_MOTORISTA', 'EIXO-2026', 'Shopping Grand Plaza André', 'CONSOLIDADO-ANDRE', 'CLASSE_II_SECOS', 'DESIGNADA', NOW(), -23.6489, -46.5388);
+VALUES ('$UUID_MISSAO', '$ID_MOTORISTA', 'EIXO-2026', 'Shopping Grand Plaza André', 'CONSOLIDADO-ANDRE', 'CLASSE_II_SECOS', 'DESIGNADA', '2026-06-05 09:00:00', -23.6489, -46.5388);
 EOF
 
 echo "📱 [2/7] PORTÃO T1: Autenticação biométrica do condutor no aplicativo agnóstico..."
-curl -s -X POST "$API_URL/mobile/jornadas/estado" \
+curl -s -X POST "$API_URL/jornadas/estado" \
   -H "Content-Type: application/json" \
   -d "{
     \"uuid_missao\": \"$UUID_MISSAO\",
@@ -76,7 +170,7 @@ curl -s -X POST "$API_URL/mobile/jornadas/estado" \
 echo -e "\n"
 
 echo "comunidade 🚛 [3/7] PORTÃO T2: Chegada no Shopping. Registro de Pesagem 1 (Tara)..."
-curl -s -X POST "$API_URL/mobile/jornadas/estado" \
+curl -s -X POST "$API_URL/jornadas/estado" \
   -H "Content-Type: application/json" \
   -d "{
     \"uuid_missao\": \"$UUID_MISSAO\",
@@ -86,7 +180,7 @@ curl -s -X POST "$API_URL/mobile/jornadas/estado" \
 echo -e "\n"
 
 echo "📸 [4/7] PORTÃO T3: Carregamento concluído. Submetendo MTR/NF-e + Mínimo de 2 Fotos EXIF..."
-curl -s -X POST "$API_URL/mobile/jornadas/estado" \
+curl -s -X POST "$API_URL/jornadas/estado" \
   -H "Content-Type: application/json" \
   -d "{
     \"uuid_missao\": \"$UUID_MISSAO\",
@@ -96,15 +190,15 @@ curl -s -X POST "$API_URL/mobile/jornadas/estado" \
       \"mtr_numero\": \"MTR-99231-2026\",
       \"nfe_numero\": \"NFE-44021\",
       \"fotos_evidencia\": [
-        { \"step\": \"T3_FOTO_LOTE_1\", \"hash_sha256\": \"sha256-img01\", \"latitude\": -23.6489, \"longitude\": -46.5388, \"timestamp\": \"2026-06-13T18:00:00Z\" },
-        { \"step\": \"T3_FOTO_LOTE_2\", \"hash_sha256\": \"sha256-img02\", \"latitude\": -23.6488, \"longitude\": -46.5387, \"timestamp\": \"2026-06-13T18:02:00Z\" }
+        { \"step\": \"T3_FOTO_LOTE_1\", \"hash_sha256\": \"sha256-img01\", \"latitude\": -23.6489, \"longitude\": -46.5388, \"timestamp\": \"2026-06-05T14:00:00Z\" },
+        { \"step\": \"T3_FOTO_LOTE_2\", \"hash_sha256\": \"sha256-img02\", \"latitude\": -23.6488, \"longitude\": -46.5387, \"timestamp\": \"2026-06-05T14:02:00Z\" }
       ]
     }
   }"
 echo -e "\n"
 
 echo "🛣️ [5/7] PORTÃO T4: Rota em andamento com GPS ativo de 3 em 3 minutos..."
-curl -s -X POST "$API_URL/api/v1/mobile/jornadas/estado" \
+curl -s -X POST "$API_URL/jornadas/estado" \
   -H "Content-Type: application/json" \
   -d "{
     \"uuid_missao\": \"$UUID_MISSAO\",
@@ -114,7 +208,7 @@ curl -s -X POST "$API_URL/api/v1/mobile/jornadas/estado" \
 echo -e "\n"
 
 echo "⚖️ [6/7] PORTÃO T4_CHECK: Portão da Consolidadora André. Pesagem 3 (Entrada) + Varredura de Contrabando..."
-curl -s -X POST "$API_URL/mobile/jornadas/estado" \
+curl -s -X POST "$API_URL/jornadas/estado" \
   -H "Content-Type: application/json" \
   -d "{
     \"uuid_missao\": \"$UUID_MISSAO\",
@@ -128,7 +222,7 @@ curl -s -X POST "$API_URL/mobile/jornadas/estado" \
 echo -e "\n"
 
 echo "🏁 [7/7] PORTÃO T6: Pesagem 4 (Tara Final de Saída) e Emissão do Handshake Temporal..."
-curl -s -X POST "$API_URL/mobile/jornadas/estado" \
+curl -s -X POST "$API_URL/jornadas/estado" \
   -H "Content-Type: application/json" \
   -d "{
     \"uuid_missao\": \"$UUID_MISSAO\",

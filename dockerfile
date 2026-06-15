@@ -1,61 +1,29 @@
-# Base estável de produção
-FROM node:18-alpine
+################################################################################
+# ECOSSISTEMA RECICLA (BACKEND CORE ENGINE)
+# CAMINHO FÍSICO: /boot/torre/recicla/Dockerfile
+# RESPONSABILIDADE: Construir a imagem estável Linux Alpine para a API Gateway
+################################################################################
 
-# 1. Instala os compiladores nativos e ferramentas para compilação nativa
-RUN apk add --no-cache python3 make g++ gcc
-
-WORKDIR /usr/src/app
-
-# Copia os manifestos de dependências primeiro (Otimização de Cache)
-COPY package*.json ./
-
-# 2. Força o NPM a ignorar compilações de hardware desnecessárias locais
-RUN npm install --omit=optional --ignore-scripts
-
-# 3. Instala o ts-node e typescript globalmente no container 
-# Isso garante que o comando CMD consiga executar o server.ts direto no Alpine
-RUN npm install -g ts-node typescript
-
-# Copia a estrutura real do projeto identificada no VS Code
-COPY src/gateway-api/ ./src/gateway-api/
-COPY .env ./
-
-EXPOSE 3000
-
-# Executa diretamente o arquivo TypeScript mapeado
-CMD ["ts-node", "src/gateway-api/server.ts"]
-
-# Copia a estrutura real do projeto identificada no VS Code
-COPY src/gateway-api/ ./src/gateway-api/
-COPY tsconfig.json ./
-COPY .env ./
-
-EXPOSE 3000
-
-# Executa diretamente o arquivo TypeScript mapeado
-CMD ["ts-node", "src/gateway-api/server.ts"]
-
-Dockerfile
-/*******************************************************************************
- * ESTRUTURA PARA ATIVAR: recycle (Infraestrutura de Runtime Isolada)
- * CAMINHO FÍSICO: /boot/torre/recycle/Dockerfile.dev
- * CONFIGURAÇÃO: Micro-ambiente Alpine para Node.js / Express (Porta 3001)
- * STATUS: NOVO ARQUIVO PARA CRIAR
- *******************************************************************************/
-
+# Passo 1: Imagem base leve do Node.js
 FROM node:20-alpine
 
-WORKDIR /app
+# Passo 2: Definir o diretório interno de trabalho do container
+WORKDIR /usr/src/app
 
-# Copia apenas os manifestos locais da pasta atual
+# Passo 3: Copiar os manifestos de dependência
 COPY package*.json ./
-COPY tsconfig.json ./
 
-# Instalação limpa isolada de qualquer contaminação do host
+# Passo 4: Instalar as dependências (incluindo o CORS adicionado)
 RUN npm install
 
+# Passo 5: Copiar todo o restante do código fonte
 COPY . .
 
-EXPOSE 3001
+# Passo 6: Compilar o TypeScript (Garante que não há erros estáticos)
+RUN npm run build
 
-CMD ["npx", "ts-node", "src/gateway-api/server.ts"]
+# Passo 7: Expor a porta real de controle sincronizada
+EXPOSE 3000
+
+# Passo 8: Comando de inicialização do servidor em produção
+CMD ["npm", "start"]

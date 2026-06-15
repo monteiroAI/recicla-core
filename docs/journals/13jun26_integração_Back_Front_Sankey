@@ -1,0 +1,42 @@
+# 🏛️ JOURNAL TÉCNICO OPERACIONAL — 13/06/2026
+**PROJETO:** ECOSSISTEMA DE RASTREABILIDADE LOGÍSTICA RECICLA (PGRS)  
+**RESPONSÁVEL:** Engenharia de Sistemas (Monteiro)  
+**STATUS DO WORKSPACE:** 🟢 ALINHADO & PRONTO PARA HOMOLOGAÇÃO GRÁFICA  
+
+---
+
+## 👁️ 1. CONSCIÊNCIA SITUACIONAL E INFRAESTRUTURA DOCKER
+A execução do comando de inspeção global (`docker compose ps`) e a auditoria estática do manifesto `docker-compose.yml` pacificaram as nomenclaturas de serviços e isolaram as portas reais expostas na malha de rede do Host Fedora 44:
+* **Serviço API Gateway (`recicla-api-1`):** Batizado no compose como `api`. Mapeado nativamente para operar e escutar na porta física **`3000`** (`0.0.0.0:3000->3000/tcp`).
+* **Serviço Base de Dados (`recicla-db-1`):** Batizado no compose como `database`. Operando de forma estável sob o PostgreSQL 14 com as credenciais de superusuário `recicla_user` no banco centralizado `postgres`.
+
+---
+
+## 🔍 2. DIAGNÓSTICO DOS MISMATCHES DE INTEGRAÇÃO (RESOLVIDO)
+A introdução da IA de auditoria de workspace (**Cline**) permitiu o mapeamento completo de links internos e dependências, revelando os três pontos cegos que barravam a comunicação entre o aplicativo móvel, o barramento HTTP e o HTML do Dashboard:
+1. **Conflito Físico de Portas:** O contêiner redirecionava o tráfego externo para a porta 3000, mas o código-fonte (`server.ts`) escutava isolado na porta 3001. A porta do código foi calibrada para **3000**.
+2. **Descompasso Lógico de Rotas:** O arquivo front-end `dashboard.html` disparava requisições assíncronas em busca do balanço de massa para a rota `/api/v1/metrics/sankey`. No entanto, o backend expunha o método de cálculo na URI `/api/analytics/sankey-mass-balance`. A rota foi unificada e cravada sob o padrão esperado pelo HTML.
+3. **Bomba de Runtime (Falta de Dependência):** O arquivo `server.ts` importava expressamente o módulo `cors`, mas o pacote não constava nas dependências do `package.json`, gerando crashes silenciosos de montagem. O pacote e suas respectivas tipagens de desenvolvimento foram inseridos no manifesto.
+
+---
+
+## 🏗️ 3. EVOLUÇÃO ARQUITETURAL (CLEAN ARCHITECTURE)
+Seguindo a diretriz purista de engenharia de software de que metadados de infraestrutura geral pertencem a serviços compartilhados e não a módulos verticais de negócio, a estrutura de pastas do backend foi refatorada:
+* Criada a camada **`src/shared/infra/http/`** para isolar lógicas de barramento cross-cutting.
+* Implementado o controlador global `systemConfigController.ts` e o roteador `system.routes.ts`, responsáveis por entregar dinamicamente o Schema Ativo (`SIMULATION` ou `PUBLIC`) para que os dashboards eliminem pontos cegos de auditoria de pátio.
+* Acoplado o barramento global e o pool relacional nativo (`db`) diretamente no arquivo central unificado e limpo: `src/gateway-api/server.ts`.
+
+---
+
+## ⚙️ 4. PIPELINE DE SIMULAÇÃO PERICIAL PGRS
+O script simulador de campo móvel (`tests/simulate_kmp_flow.sh`) foi integralmente saneado para refletir a topologia real do ecossistema:
+* Ajustada a URL de destino para bater na porta estável `3000`.
+* Corrigido o direcionamento de comandos SQL internos para atuar diretamente no contêiner `recicla-db-1` sob o papel do `recicla_user`.
+* Implementado com sucesso o handshake de encerramento temporizado pós-sucesso pericial de trânsito, enviando o token `FILES_RECEIVED_OK` acompanhado de um **TTL (Time-To-Live) de 172.800 segundos (Contador Regressivo de 48 horas)** para gerenciamento do cache local do dispositivo móvel do motorista.
+
+---
+
+## 🚀 5. PRÓXIMOS PASSOS ESTABELECIDOS
+1. Executar a reconstrução completa e limpa da imagem da API no Docker para consolidar a injeção do pacote de CORS:
+   ```bash
+   docker compose up -d --build api

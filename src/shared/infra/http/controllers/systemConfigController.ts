@@ -6,9 +6,8 @@
  *******************************************************************************/
 
 import { Request, Response } from 'express';
-import { Pool } from 'pg';
+import { pool } from '../../postgres';
 
-const pool = new Pool();
 const schemaAtivoGeral = "simulation"; // Mapeia o batimento do sprint atual
 
 export const obterStatusAmbienteGlobal = async (req: Request, res: Response) => {

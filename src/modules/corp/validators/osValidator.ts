@@ -1,38 +1,68 @@
-/*******************************************************************************
- * MÓDULO: CORP / LOGÍSTICA DE GRANDES GERADORES
- * CAMINHO FÍSICO: /boot/torre/recicla/src/modules/corp/validators/osValidator.ts
- * RESPONSABILIDADE: Validador de Incompatibilidade de Destinação Ambiental
- * STATUS: REGRA AMBIENTAL ESTREITA BLINDADA
- *******************************************************************************/
+/**
+ * ============================================================================================
+ * 📦 PROJECT:   RECICLA - SISTEMA TRILATERAL DE RASTREABILIDADE E LOGÍSTICA REVERSA
+ * 📁 CAMINHO:   ~/workspace/torre/recicla/src/modules/corp/validators/osValidator.ts
+ * 🏭 MODULE:    CORP / VALIDATORS
+ * 🚀 CAPABILITY: ENGINE DE VALIDAÇÃO MATEMÁTICA DE BALANÇAS (ANTI-FRAUDE & AWS-READY)
+ * ============================================================================================
+ */
 
-import { Request, Response, NextFunction } from 'express';
-import { pool } from '../../../shared/infra/postgres';
+export interface IPesagemFluxo {
+  peso_entrada: number; // Peso ao chegar no pátio
+  peso_saida: number;   // Peso ao sair do pátio
+}
 
-export const validarIncompatibilidadeClasse = async (req: Request, res: Response, next: NextFunction) => {
-  const { id_destino, classe_residuo } = req.body;
+export interface IValidacaoMissaoInput {
+  codigo_missao: string;
+  cenario: 'PATIO_UNICO' | 'MULTI_INSTALACAO';
+  compostagem: IPesagemFluxo;
+  reciclagem: IPesagemFluxo;
+}
 
-  try {
-    // 1. Verifica se o destino cadastrado na O.S. possui a licença operacional de Consolidador/Cooperativa
-    const queryDestino = `
-      SELECT tipo_licenca 
-      FROM instituicoes_destinos 
-      WHERE id = $1;
-    `;
-    const resDestino = await pool.query(queryDestino, [id_destino]);
-    const tipoLicenca = resDestino.rows[0]?.tipo_licenca;
-
-    // 2. Trava de Segurança Crítica Ambiental
-    if (tipoLicenca === 'CONSOLIDADOR_COOPERATIVA' && classe_residuo === 'CLASSE_I') {
-      return res.status(400).json({
-        success: false,
-        error: "BLOQUEIO DE COMPLIANCE: Incompatibilidade Crítica de Destinação.",
-        details: "Instalações de triagem e compostagem da Cooperativa não possuem licença para receber Resíduos Perigosos (Classe I). Emissão de O.S. abortada pelo RECICLA."
-      });
+export class OsValidator {
+  /**
+   * Valida a integridade física e matemática de todas as pesagens de uma missão
+   * ANTES de permitir a escrita no PostgreSQL ou no Hyperledger Fabric.
+   */
+  public static validarPesagens(input: IValidacaoMissaoInput): { valido: boolean; erro?: string; massa_organicos_kg: number; massa_secos_kg: number } {
+    
+    // 1. Apuração atômica da fração Orgânica (Sempre Entrada - Saída da Compostagem)
+    const organicos = input.compostagem.peso_entrada - input.compostagem.peso_saida;
+    if (organicos < 0) {
+      return { valido: false, erro: "💥 Fraude detectada: Peso de saída maior que entrada na Compostagem.", massa_organicos_kg: 0, massa_secos_kg: 0 };
     }
 
-    // Se for Classe II (Recicláveis Secos ou Orgânicos), o fluxo prossegue para a O.S.
-    next();
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    // 2. Apuração atômica da fração Seca (Sempre Entrada - Saída da Reciclagem)
+    const secos = input.reciclagem.peso_entrada - input.reciclagem.peso_saida;
+    if (secos < 0) {
+      return { valido: false, erro: "💥 Fraude detectada: Peso de saída maior que entrada na Reciclagem.", massa_organicos_kg: 0, massa_secos_kg: 0 };
+    }
+
+    // ==============================================================================
+    // REGRA FLEXÍVEL PARA CENÁRIO 2: MULTI-INSTALACAO
+    // Exige paridade e amarração de tráfego entre a Saída da Instalação A e Entrada da B
+    // ==============================================================================
+    if (input.cenario === 'MULTI_INSTALACAO') {
+      const quebra_transito = input.compostagem.peso_saida - input.reciclagem.peso_entrada;
+      
+      // Permite uma tolerância física máxima de 1% (ex: perda volátil ou calibração de balança)
+      const margem_tolerancia = input.compostagem.peso_saida * 0.01; 
+
+      if (Math.abs(quebra_transito) > margem_tolerancia) {
+        return {
+          valido: false,
+          erro: `🚨 Alerta de Desvio Criptográfico: O caminhão saiu da Compostagem com ${input.compostagem.peso_saida}kg, mas chegou na Reciclagem com ${input.reciclagem.peso_entrada}kg. Divergência fora da margem aceitável!`,
+          massa_organicos_kg: organicos,
+          massa_secos_kg: secos
+        };
+      }
+    }
+
+    // Se passou por todas as cercas matemáticas, a história é declarada verdadeira
+    return {
+      valido: true,
+      massa_organicos_kg: organicos,
+      massa_secos_kg: secos
+    };
   }
-};
+}

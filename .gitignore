@@ -1,5 +1,19 @@
-node_modules
-# Keep environment variables out of version control
-.env
+# Dependências de Infraestrutura e Runtime
+node_modules/
 
-/generated/prisma
+# 🚨 COMPILAÇÃO (Evita duplicidade de arquivos .js no repositório)
+dist/
+
+# Banco de Dados e ORM
+/generated/prisma/
+
+# Segurança: Nunca subir chaves de API ou credenciais de pátio
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs do Sistema e do Docker
+*.log
+npm-debug.log*

@@ -182,8 +182,9 @@
                 <div class="canvas-header">Diagrama de Fluxo de Materiais (Trilateral Sankey)</div>
                 <div id="sankey-chart"></div>
 
-                <div class="ipa-container-title">Inventário de Produtos Acabados (Mês de Competência)</div>
-                <div class="ipa-grid" id="ipa-cards-grid">
+                <div class="ipa-container-title">Depósito de Matéria-Secunda (Mês de Competência)</div>
+                <div class="ipa-grid" id="materia-secunda-grid">
+                    <!-- Injetado via API-->
                     </div>
             </section>
 
@@ -275,36 +276,36 @@
                 .text(d => d.name);
         }
 
-        async function carregarDashboard() {
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
+async function carregarDashboard() {
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
 
-                // 3) Atualizando KPIs
-                document.getElementById('kpi-massa').textContent = `${data.estatisticas.massa_total.toFixed(2)} t`;
-                document.getElementById('kpi-recuperacao').textContent = `${data.estatisticas.taxa_recuperacao}%`;
-                document.getElementById('kpi-rejeito').textContent = `${data.estatisticas.taxa_rejeito}%`;
-                document.getElementById('kpi-co2').textContent = `${data.estatisticas.co2_evitado_total.toFixed(1)} t`;
+        // Atualizando KPIs superiores
+        document.getElementById('kpi-massa').textContent = `${data.estatisticas.massa_total.toFixed(2)} t`;
+        document.getElementById('kpi-recuperacao').textContent = `${data.estatisticas.taxa_recuperacao}%`;
+        document.getElementById('kpi-rejeito').textContent = `${data.estatisticas.taxa_rejeito}%`;
+        document.getElementById('kpi-co2').textContent = `${data.estatisticas.co2_evitado_total.toFixed(1)} t`;
 
-                // Render mestre do Sankey
-                renderizarSankey(data.fluxos);
+        // Render do diagrama Sankey
+        renderizarSankey(data.fluxos);
 
-                // 3) Montando as Caixas Isoladas do Inventário de Produtos Acabados (IPA)
-                const ipaGrid = document.getElementById('ipa-cards-grid');
-                ipaGrid.innerHTML = '';
-                data.inventario_ipa.forEach(item => {
-                    const cardClass = item.isRejeito ? 'ipa-box rejeito' : 'ipa-box';
-                    const card = `<div class="${cardClass}" style="${!item.isRejeito ? 'border-left-color:' + item.cor : ''}">
-                        <h5>${item.material}</h5>
-                        <p>${item.peso}</p>
-                    </div>`;
-                    ipaGrid.innerHTML += card;
-                });
+        // Montando as Caixas Isoladas do Depósito de Matéria-Secunda
+        const depositoGrid = document.getElementById('materia-secunda-grid');
+        depositoGrid.innerHTML = '';
+        data.deposito_materia_secunda.forEach(item => {
+            const cardClass = item.isRejeito ? 'ipa-box rejeito' : 'ipa-box';
+            const card = `<div class="${cardClass}" style="${!item.isRejeito ? 'border-left-color:' + item.cor : ''}">
+                <h5>${item.material}</h5>
+                <p>${item.weight || item.peso}</p>
+            </div>`;
+            depositoGrid.innerHTML += card;
+        });
 
-            } catch (err) {
-                console.error("Erro ao carregar dados consolidados:", err);
-            }
-        }
+    } catch (err) {
+        console.error("Erro ao carregar dados consolidados:", err);
+    }
+}
 
         document.addEventListener('DOMContentLoaded', carregarDashboard);
     </script>

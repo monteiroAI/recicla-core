@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área do Cliente - Gestão ESG PGRS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-deep: #121214;
+            --bg-panel: #1a1a1e;
+            --bg-input: #202024;
+            --border-color: #29292e;
+            --text-main: #e1e1e6;
+            --text-support: #a8a8b3;
+            --brand-corp: #2c3e50; /* Identidade B2B Cliente */
+            --brand-green-light: #2ecc71;
+            --accent-blue: #3498db;
+            --simulation-red: #e74c3c;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-deep); color: var(--text-main); margin: 0; display: grid; grid-template-rows: 70px 1fr; height: 100vh; overflow: hidden; }
+        .marquee-superior { background-color: var(--bg-panel); border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .brand-box { display: flex; align-items: center; gap: 12px; }
+        .logo-placeholder { font-weight: bold; color: var(--brand-green-light); font-size: 1.2rem; border: 2px solid var(--brand-green-light); padding: 4px 8px; border-radius: 4px; }
+        .marquee-title { font-size: 1.4rem; font-weight: 600; text-transform: uppercase; }
+        .status-pill { background: var(--bg-input); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.8rem; border-left: 4px solid var(--simulation-red); }
+        .main-workspace { display: grid; grid-template-columns: 240px 1fr 300px; height: 100%; overflow: hidden; }
+        .coluna-esquerda { background-color: var(--brand-corp); padding: 20px 0; display: flex; flex-direction: column; justify-content: space-between; }
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-item { padding: 15px 25px; color: var(--text-main); display: flex; align-items: center; gap: 12px; text-decoration: none; font-size: 0.95rem; }
+        .menu-item.active { background-color: rgba(255,255,255,0.1); font-weight: bold; border-left: 4px solid var(--brand-green-light); }
+        .content-center { display: grid; grid-template-rows: auto 1fr auto; padding: 20px; gap: 20px; overflow-y: auto; }
+        .kpi-horizontal-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .kpi-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+        .kpi-card h4 { margin: 0; font-size: 0.75rem; text-transform: uppercase; color: var(--text-support); }
+        .kpi-card p { margin: 5px 0 0 0; font-size: 1.4rem; font-weight: bold; }
+        .core-canvas { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
+        .chart-footer-area { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; font-size: 0.85rem; color: var(--text-support); }
+        .coluna-direita { background-color: var(--bg-panel); border-left: 2px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .se-block { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+        .se-block h3 { margin: 0 0 15px 0; font-size: 0.9rem; text-transform: uppercase; color: var(--accent-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .se-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+        .se-row span { color: var(--text-support); }
+        .se-value { font-weight: bold; }
+        .compliance-box { margin-top: 20px; background: rgba(46, 204, 113, 0.05); border: 1px dashed var(--brand-green-light); border-radius: 6px; padding: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header class="marquee-superior">
+        <div class="brand-box"><div class="logo-placeholder">M2nd</div></div>
+        <div class="marquee-title">Portal ESG - Grande Gerador</div>
+        <div class="status-pill"><span style="color: var(--simulation-red);">CONEXÃO SIMULATION</span></div>
+    </header>
+
+    <div class="main-workspace">
+        <nav class="coluna-esquerda">
+            <ul class="menu-list">
+                <li><a href="#" class="menu-item active"><i class="fa-solid fa-leaf"></i> Indicadores ESG</a></li>
+                <li><a href="#" class="menu-item"><i class="fa-solid fa-file-pdf"></i> Certificados MTR</a></li>
+            </ul>
+            <div style="padding: 0 25px; font-size: 0.75rem; color: rgba(255,255,255,0.3);">Cliente S/A · v1.0</div>
+        </nav>
+
+        <main class="content-center">
+            <section class="kpi-horizontal-bar">
+                <div class="kpi-card"><h4>Sua Massa Destinada</h4><p style="color: var(--accent-blue);">4.30 t</p></div>
+                <div class="kpi-card"><h4>Taxa Desvio Aterro</h4><p style="color: var(--brand-green-light);">78%</p></div>
+                <div class="kpi-card"><h4>Sua Redução $CO_2$</h4><p id="kpi-co2" style="color: var(--brand-green-light);">0.0 t</p></div>
+                <div class="kpi-card"><h4>Índice Compliance</h4><p style="color: var(--brand-green-light);">100%</p></div>
+            </section>
+
+            <section class="core-canvas">
+                <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 15px;"><i class="fa-solid fa-seedling"></i> Destinação e Rastreabilidade de Matéria-Secunda</div>
+                <p style="color: var(--text-support); line-height: 1.6;">
+                    Seu resíduo sólido classificado como inerte foi reinserido com sucesso em ciclos produtivos industriais, substituindo matérias-primas virgens e reduzindo de forma mensurável as emissões de gases de efeito estufa da sua corporação conforme metodologia **Monteiro, A. 2025**.
+                </p>
+                <div class="compliance-box">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--brand-green-light); font-size: 1.5rem; margin-bottom: 5px;"></i>
+                    <div style="font-weight: bold; color: var(--text-main);">Certificado de Rastreabilidade Trilateral Ativo</div>
+                    <span style="font-size: 0.8rem; color: var(--text-support);">Lastreado via mrvTRUST e integrado à SEFAZ</span>
+                </div>
+            </section>
+
+            <footer class="chart-footer-area">
+                <strong>Evidência ESG:</strong> Relatório em conformidade estrita com a Política Nacional de Resíduos Sólidos (PNRS).
+            </footer>
+        </main>
+
+        <aside class="coluna-direita">
+            <div class="se-block">
+                <h3>Impacto Acumulado</h3>
+                <div class="se-row"><span>Arvores Salvas:</span><div class="se-value">73</div></div>
+                <div class="se-row"><span>Créditos M2a:</span><div class="se-value" style="color: var(--brand-green-light);">14.2</div></div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        async function carregarCliente() {
+            try {
+                const response = await fetch('http://localhost:3001/api/v1/metrics/sankey');
+                const data = await response.json();
+                document.getElementById('kpi-co2').textContent = `${(4.30 * 2.45).toFixed(1)} t`;
+            } catch (err) { console.error(err); }
+        }
+        document.addEventListener('DOMContentLoaded', carregarCliente);
+    </script>
+</body>
+</html>

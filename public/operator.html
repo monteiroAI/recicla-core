@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operador PGRS - Controle de Missões</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-deep: #121214;
+            --bg-panel: #1a1a1e;
+            --bg-input: #202024;
+            --border-color: #29292e;
+            --text-main: #e1e1e6;
+            --text-support: #a8a8b3;
+            --brand-navy: #1b2a47;
+            --brand-green-light: #2ecc71;
+            --brand-orange: #f39c12;
+            --simulation-red: #e74c3c;
+            --accent-blue: #3498db;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-deep); color: var(--text-main); margin: 0; display: grid; grid-template-rows: 70px 1fr; height: 100vh; overflow: hidden; }
+        .marquee-superior { background-color: var(--bg-panel); border-bottom: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .marquee-title { font-size: 1.4rem; font-weight: 600; text-transform: uppercase; }
+        .status-pill { background: var(--bg-input); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.8rem; border-left: 4px solid var(--simulation-red); }
+        .main-workspace { display: grid; grid-template-columns: 240px 1fr 300px; height: 100%; overflow: hidden; }
+        .coluna-esquerda { background-color: var(--brand-navy); padding: 20px 0; display: flex; flex-direction: column; justify-content: space-between; }
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-item { padding: 15px 25px; color: var(--text-main); display: flex; align-items: center; gap: 12px; text-decoration: none; font-size: 0.95rem; }
+        .menu-item.active { background-color: rgba(255,255,255,0.1); font-weight: bold; border-left: 4px solid var(--brand-green-light); }
+        .content-center { display: grid; grid-template-rows: auto 1fr auto; padding: 20px; gap: 20px; overflow-y: auto; }
+        .kpi-horizontal-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .kpi-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+        .kpi-card h4 { margin: 0; font-size: 0.75rem; text-transform: uppercase; color: var(--text-support); }
+        .kpi-card p { margin: 5px 0 0 0; font-size: 1.4rem; font-weight: bold; }
+        .core-canvas { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
+        .missions-table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 15px; }
+        .missions-table th { padding: 12px; border-bottom: 2px solid var(--border-color); color: var(--text-support); font-size: 0.85rem; text-transform: uppercase; }
+        .missions-table td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+        .clickable-row { cursor: pointer; transition: background 0.2s; }
+        .clickable-row:hover { background: rgba(52, 152, 219, 0.1); }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
+        .status-badge.concluida { background: rgba(46, 204, 113, 0.15); color: var(--brand-green-light); }
+        .chart-footer-area { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; font-size: 0.85rem; color: var(--text-support); }
+        .coluna-direita { background-color: var(--bg-panel); border-left: 2px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .se-block { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+        .se-block h3 { margin: 0 0 15px 0; font-size: 0.9rem; text-transform: uppercase; color: var(--brand-green-light); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .se-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+        .se-value { font-weight: bold; }
+
+        /* MODAL FORENSE */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-box { background: var(--bg-panel); border: 2px solid var(--border-color); border-radius: 12px; width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+        .modal-header h3 { margin: 0; color: var(--brand-green-light); font-size: 1.2rem; text-transform: uppercase; }
+        .close-btn { background: none; border: none; color: var(--text-support); font-size: 1.2rem; cursor: pointer; }
+        .forensic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9rem; }
+        .forensic-item span { display: block; font-size: 0.75rem; color: var(--text-support); text-transform: uppercase; }
+        .forensic-item strong { color: var(--text-main); font-size: 1rem; }
+        .forensic-full { grid-column: 1 / -1; background: var(--bg-deep); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .action-bar { margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn { padding: 10px 16px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-secondary { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+
+    <header class="marquee-superior">
+        <div class="brand-box"><div class="logo-placeholder">M2nd</div></div>
+        <div class="marquee-title">Painel do Operador PGRS</div>
+        <div class="status-pill"><span style="color: var(--simulation-red);">CONEXÃO SIMULATION</span></div>
+    </header>
+
+    <div class="main-workspace">
+        <nav class="coluna-esquerda">
+            <ul class="menu-list">
+                <li><a href="#" class="menu-item active"><i class="fa-solid fa-list-check"></i> Monitor de Missões</a></li>
+                <li><a href="#" class="menu-item"><i class="fa-solid fa-file-shield"></i> Auditoria MTR</a></li>
+            </ul>
+            <div style="padding: 0 25px; font-size: 0.75rem; color: rgba(255,255,255,0.3);">Operador · v1.3.0</div>
+        </nav>
+
+        <main class="content-center">
+            <section class="kpi-horizontal-bar">
+                <div class="kpi-card"><h4>Clientes Ativos</h4><p style="color: var(--accent-blue);">3 Geradores</p></div>
+                <div class="kpi-card"><h4>Massa Sob Custódia</h4><p id="kpi-massa">0.00 t</p></div>
+                <div class="kpi-card"><h4>MTRs Sob Custódia</h4><p style="color: var(--brand-green-light);">3 Emitidos</p></div>
+                <div class="kpi-card"><h4>Handshake Regulatório</h4><p style="color: var(--brand-green-light);">Art. 20 PNRS</p></div>
+            </section>
+
+            <section class="core-canvas">
+                <div style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-satellite-dish"></i> Carteira de Geradores Compulsórios (Clique na linha para ver evidências)</div>
+                <table class="missions-table">
+                    <thead>
+                        <tr>
+                            <th>ID Missão</th>
+                            <th>Gerador Compulsório</th>
+                            <th>Classificação PNRS</th>
+                            <th>Massa Coletada</th>
+                            <th>Manifesto MTR</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="missions-tbody">
+                        <!-- Injetado dinamicamente via API -->
+                    </tbody>
+                </table>
+            </section>
+
+            <footer class="chart-footer-area">
+                <strong>Log de Eventos:</strong> Seleção baseada em limites volumétricos municipais conforme Seção V da Lei 12305/10.
+            </footer>
+        </main>
+
+        <aside class="coluna-direita">
+            <div class="se-block" style="border-left: 4px solid var(--brand-green-light);">
+                <h3>Faturamento de Ancoragem</h3>
+                <div class="se-row"><span>Receita Bruta (Lotes PGRS):</span><div class="se-value" style="color: var(--brand-green-light);">R$ 450,00</div></div>
+                <div class="se-row"><span>Royalty Protocolo (mrvTRUST):</span><div class="se-value" style="color: var(--simulation-red);">R$ 180,00</div></div>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 10px 0;">
+                <div class="se-row"><span>Margem Líquida Retida:</span><div class="se-value" style="color: var(--accent-blue);">R$ 270,00</div></div>
+            </div>
+
+            <div class="se-block">
+                <h3>Logística de Campo</h3>
+                <div class="se-row"><span>Veículos em Rota:</span><div class="se-value">3</div></div>
+                <div class="se-row"><span>API Handshake:</span><div class="se-value">120ms</div></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- MODAL DE DETALHES FORENSES -->
+    <div class="modal-overlay" id="forensic-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-shield-halved"></i> Cópia Digital de Evidências</h3>
+                <button class="close-btn" onclick="fecharModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="forensic-grid" id="modal-content">
+                <!-- Preenchido via clique -->
+            </div>
+            <!-- CONTEÚDO DO MODAL DO OPERADOR AJUSTADO -->
+            <div class="forensic-grid" id="modal-content">
+                <!-- Preenchido dinamicamente -->
+            </div>
+            
+            <div style="margin-top: 15px; background: rgba(52, 152, 219, 0.05); border: 1px dashed var(--accent-blue); padding: 12px; border-radius: 6px; font-size: 0.85rem;">
+                <i class="fa-solid fa-circle-info" style="color: var(--accent-blue);"></i> 
+                <strong>Status de Proteção:</strong> Esta missão possui evidências físicas completas. O Gerador pode converter este lote em um <strong>Certificado de Homologação Forense</strong> por R$ 150,00 no Portal do Cliente.
+            </div>
+
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="fecharModal()">Fechar</button>
+                <button class="btn btn-primary" style="background-color: var(--brand-navy); border: 1px solid var(--border-color);" onclick="alert('Notificação enviada ao Gerador sugerindo a ativação da Blindagem Forense para esta missão!')">
+                    <i class="fa-solid fa-bell"></i> Recomendar Homologação Forense
+                </button>
+            </div>
+        </div>
+    </div>
+
+<!-- NOVO BLOCO: FILA DE ENTREGA DE CHF (INSIRA ABAIXO DA TABELA DE MISSÕES) -->
+                <div style="margin-top: 35px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <div style="font-size: 1.1rem; font-weight: 600; color: var(--brand-green-light);">
+                        <i class="fa-solid fa-stamp"></i> CHF Ordenados pelo Cliente (Aguardando Entrega)
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-support); margin: 5px 0 15px 0;">
+                        O mrvTRUST processou o aval técnico ("pode mintar"). Realize o envio oficial do Certificado de Homologação Forense co-branded para consolidar o relacionamento.
+                    </p>
+                    
+                    <div style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: var(--text-main); display: block;">Shopping Plaza Central — Manifesto MS-2026-001</strong>
+                            <span style="font-size: 0.8rem; color: var(--brand-green-light);">
+                                <i class="fa-solid fa-cube"></i> Mint Autorizado pelo Gerador · Lote: 2.00 t (Classe III)
+                            </span>
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" style="background: var(--brand-green-light); color: #121214;" onclick="alert('Certificado Gerado! Layout aplicado com a SUA MARCA em destaque e selo [Powered by mrvTRUST] no rodapé. Enviado ao cliente com sucesso!')">
+                                <i class="fa-solid fa-paper-plane"></i> Entregar CHF ao Cliente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+
+   <script>
+        async function carregarOperadorPGRS() {
+            const tbody = document.getElementById('missions-tbody');
+            
+            // 1. Dados de contingência estáveis
+            let missoesContratadas = [
+                { 
+                    id: "MS-2026-001", 
+                    gerador: "Shopping Plaza Central", 
+                    material: "Sólidos Inertes - Classe III", 
+                    massa: 2.00, 
+                    status: "CONCLUÍDA", 
+                    mtr: "MTR-260101",
+                    os: "OS-88941", data: "18/06/2026", horario: "10:14:22",
+                    motorista: "Carlos Silva (ID: 441)", veiculo: "Caminhão Poliguindaste",
+                    percurso: "Rota Expressa Zona Sul -> Pátio Central"
+                },
+                { 
+                    id: "MS-2026-002", 
+                    gerador: "Indústria Metalúrgica Alfa", 
+                    material: "Sólidos Inertes - Classe III", 
+                    massa: 1.00, 
+                    status: "CONCLUÍDA", 
+                    mtr: "MTR-260102",
+                    os: "OS-88942", data: "18/06/2026", horario: "11:30:00",
+                    motorista: "Marcos Souza (ID: 102)", veiculo: "Caminhão Roll-On",
+                    percurso: "Distrito Industrial -> Pátio Central"
+                },
+                { 
+                    id: "MS-2026-003", 
+                    gerador: "Supermercado Nova Esperança", 
+                    material: "Biomassa Orgânica Úmida", 
+                    massa: 1.30, 
+                    status: "CONCLUÍDA", 
+                    mtr: "MTR-260106",
+                    os: "OS-88945", data: "18/06/2026", horario: "08:45:10",
+                    motorista: "Ana Oliveira (ID: 312)", veiculo: "Compactador Urbano",
+                    percurso: "Filial Centro -> Pátio Compostagem"
+                }
+            ];
+
+            try {
+                // 2. Tenta puxar do servidor se estiver online
+                const response = await fetch('http://localhost:3001/api/v1/metrics/sankey');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.mission_control && data.mission_control.length > 0) {
+                        const alvosPGRS = ["shopping", "industria", "supermercado", "indústria"];
+                        missoesContratadas = data.mission_control.filter(m => {
+                            const nomeGerador = m.gerador.toLowerCase();
+                            return alvosPGRS.some(alvo => nomeGerador.includes(alvo));
+                        });
+                    }
+                }
+            } catch (err) { 
+                console.warn("API offline. Usando barramento local estável."); 
+            }
+
+            // 3. Renderização dos indicadores e linhas da tabela
+            document.getElementById('kpi-massa').textContent = "4.30 t";
+            tbody.innerHTML = '';
+            
+            // Armazena estritamente na memória global para o clique
+            window.cacheMissoes = missoesContratadas; 
+            
+            missoesContratadas.forEach((m, index) => {
+                tbody.innerHTML += `
+                    <tr class="clickable-row" onclick="abrirDetalheForense(${index})">
+                        <td><strong>${m.id}</strong></td>
+                        <td>${m.gerador}</td>
+                        <td>${m.material}</td>
+                        <td>${m.massa.toFixed(2)} t</td>
+                        <td><code>${m.mtr}</code></td>
+                        <td><span class="status-badge concluida">${m.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 4. Declaração Única e Corrigida do Modal Forense
+        function abrirDetalheForense(index) {
+            const m = window.cacheMissoes[index];
+            const content = document.getElementById('modal-content');
+            
+            content.innerHTML = `
+                <div class="forensic-item"><span>Código da Missão</span><strong>${m.id}</strong></div>
+                <div class="forensic-item"><span>Ordem de Serviço (OS)</span><strong>${m.os}</strong></div>
+                <div class="forensic-item"><span>Gerador Vinculado</span><strong>${m.gerador}</strong></div>
+                <div class="forensic-item"><span>Manifesto MTR</span><strong><code>${m.mtr}</code></strong></div>
+                <div class="forensic-item"><span>Data / Horário da Pesagem</span><strong>${m.data} às ${m.horario}</strong></div>
+                <div class="forensic-item"><span>Massa Homologada</span><strong>${m.massa.toFixed(2)} t</strong></div>
+                <div class="forensic-item"><span>Motorista de Custódia</span><strong>${m.motorista}</strong></div>
+                <div class="forensic-item"><span>Equipamento / Veículo</span><strong>${m.veiculo}</strong></div>
+                <div class="forensic-full"><span>Trajeto Rastreabilidade GPS</span><strong>${m.percurso}</strong></div>
+                
+                <div class="forensic-full" style="border-left: 4px solid var(--brand-orange); background: rgba(243, 156, 18, 0.04); padding: 15px; grid-column: 1 / -1;">
+                    <span style="color: var(--brand-orange); font-weight: bold; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Status do Lote: Não Homologado
+                    </span>
+                    <p style="margin: 0; color: var(--text-main); font-size: 0.88rem; line-height: 1.5; font-style: italic;">
+                        "Esta missão de transporte de resíduos sólidos atendeu a todas as normas e procedimentos operacionais de campo, contudo ainda não foi homologada pelo ecossistema mrvTRUST. Alinhe-se aos melhores padrões de governança ESG solicitando o Certificado de Homologação Forense no portal do Gerador."
+                    </p>
+                </div>
+            `;
+            document.getElementById('forensic-modal').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('forensic-modal').style.display = 'none';
+        }
+
+        // Inicialização limpa e sem dublês de função
+        document.addEventListener('DOMContentLoaded', carregarOperadorPGRS);
+    </script>
+</body>
+</html>

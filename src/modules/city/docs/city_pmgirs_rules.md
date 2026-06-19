@@ -89,7 +89,7 @@ Mecanismos de rastreamento - os mesmos que permitem aos auditores percorrerem to
 
 ---
 
-## 📊 4. Engenharia de Dados e Indicadores (Frontend & Blockchain)
+## 📊 5. Engenharia de Dados e Indicadores (Frontend & Blockchain)
 
 O motor analítico do `recycle` processará a massa de dados das Coletas Domiciliares  consumindo a base unificada para renderizar no Dashboard Cidade os seguintes KPIs e saídas forenses:
 
@@ -97,4 +97,14 @@ O motor analítico do `recycle` processará a massa de dados das Coletas Domicil
 * **Operational Rate:** Índice de eficiência da Missão (Tempo programado vs Tempo executado / Rotas planejadas vs Rotas efetivas).
 * **ESG Carbon Metrics:** Conversão da tonelagem de resíduos desviada de aterros para rotas de reciclagem/compostagem em índice de emissão de CO2 equivalente evitado.
 * **Mecanismo de Confiança (Certificado Homologado):** O município pode receber um Certificado Homologado de Confiança Operacional e Forense para o seu PMGIRS ao registrar índices de suficiência nas operações realizadas pelo Concessionário, o que é atestado através dos mecanismos do mrvTRUST. 
+
+## 📊 6. Os Dashboards para PMGIRS
+O gestor público opera o mrvTRUST a partir do seu Painel de Controle, com os indicadores préviamente consensados com a administração pública. 
+No âmbito operacional, tanto o gestor público como o Concessionária Pública de Coleta terão acesso a um painel Operacional, com dados das Rotas de coleta e os dados por elas gerados. O cliente final será sempre o Gestor Público Municipal, o qual poderá estabelecer quais os dados ficarão acessíveis ao concessionario. 
+
+
+
+
+
+
 

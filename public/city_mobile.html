@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cityMOBILE - Evidências Forenses Públicas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-deep: #09090a;
+            --bg-mobile: #121214;
+            --bg-card: #1a1a1e;
+            --bg-btn: #202024;
+            --border-color: #29292e;
+            --text-main: #e1e1e6;
+            --text-support: #a8a8b3;
+            --gov-blue: #2563eb;
+            --brand-green-light: #2ecc71;
+            --danger-red: #e74c3c;
+            --brand-orange: #f39c12;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* SMARTPHONE MOCK SKELETON */
+        .phone-frame {
+            width: 375px;
+            height: 780px;
+            background-color: var(--bg-mobile);
+            border: 12px solid #2d2d30;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+            display: grid;
+            grid-template-rows: 70px 1fr;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .phone-header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 20px;
+            gap: 2px;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .header-app-title { font-size: 0.95rem; font-weight: bold; color: var(--gov-blue); text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-user-badge { font-size: 0.75rem; color: var(--text-support); display: flex; align-items: center; gap: 4px; }
+
+        .phone-content {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        /* PROTOCOLO CARD */
+        .protocolo-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            border-left: 4px solid var(--border-color);
+        }
+        .protocolo-card.active { border-left-color: var(--gov-blue); }
+        .protocolo-card.success { border-left-color: var(--brand-green-light); }
+        .protocolo-card.disabled { opacity: 0.4; pointer-events: none; }
+
+        .card-header-title {
+            margin: 0;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-support);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-action {
+            background-color: var(--bg-btn);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-action:hover { background-color: #26262b; border-color: var(--gov-blue); }
+        .btn-prime { background-color: var(--gov-blue) !important; color: white !important; border: none; }
+
+        .gps-telemetry-box {
+            background-color: #0c0c0e;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--brand-green-light);
+            max-height: 90px;
+            overflow-y: auto;
+        }
+
+        .photo-preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .photo-box {
+            background: #0c0c0e;
+            border: 1px dashed var(--border-color);
+            height: 60px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-support);
+            gap: 4px;
+        }
+        .photo-box.captured { border-style: solid; border-color: var(--brand-green-light); color: var(--brand-green-light); }
+
+        .purge-timer-box {
+            background: rgba(231, 76, 60, 0.03);
+            border: 1px dashed rgba(231, 76, 60, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.75rem;
+            color: var(--text-support);
+            text-align: center;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <header class="phone-header">
+            <div class="header-top">
+                <span class="header-app-title"><i class="fa-solid fa-building-shield"></i> cityMOBILE</span>
+                <span id="txt-status-conexao" style="font-size: 0.7rem; color: var(--brand-green-light);"><i class="fa-solid fa-circle"></i> ID LASTREADO</span>
+            </div>
+            <div class="header-user-badge">
+                <i class="fa-solid fa-user-check"></i> <span id="lbl-motorista">Mot. Carlos Silva (ID: 441)</span> | Cam: #08
+            </div>
+        </header>
+
+        <div class="phone-content">
+
+            <div class="protocolo-card active" id="card-p1">
+                <div class="card-header-title">
+                    <span>1. Início de Missão Pública</span>
+                    <span id="badge-m-id" style="color: var(--gov-blue); font-weight: bold;">AGUARDANDO</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-support);">Selecione o roteiro de competência fiscal acordado com o Município:</div>
+                <select id="sel-rota-publica" style="background: var(--bg-btn); border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="RT-DOM-001">Rota 01 - Domiciliar (Secos) - Setor Centro</option>
+                    <option value="RT-DOM-002">Rota 02 - Domiciliar (Secos) - Setor Norte</option>
+                    <option value="RT-ZEL-001">Rota 03 - Zeladoria (Podas) - Praças</option>
+                </select>
+                <button class="btn-action btn-prime" id="btn-p1" onclick="executarPasso1()">Abrir Portão de Coleta</button>
+            </div>
+
+            <div class="protocolo-card disabled" id="card-p2">
+                <div class="card-header-title">2. Telemetria Forense (GPS 3km)</div>
+                <div style="font-size: 0.85rem; color: var(--text-support);">O mrvTRUST coletará as evidências de percurso georreferenciadas a cada 3km:</div>
+                <button class="btn-action" id="btn-p2" onclick="executarPasso2()">Simular Avanço de 3km na Rota</button>
+                <div class="gps-telemetry-box" id="log-gps-city">Aguardando abertura de rota...</div>
+            </div>
+
+            <div class="protocolo-card disabled" id="card-p3">
+                <div class="card-header-title">3 e 4. Balança & Destinação</div>
+                <div style="font-size: 0.85rem; color: var(--text-support);">Registre a pesagem de chegada e a destinação final exclusiva para cooperativas/compostagem:</div>
+                <button class="btn-action" id="btn-p3" onclick="executarPasso3()">Capturar Ticket e Fotos de Descarga</button>
+                <div class="photo-preview-grid">
+                    <div class="photo-box" id="pic-balanca"><i class="fa-solid fa-camera"></i><span>Foto Balança</span></div>
+                    <div class="photo-box" id="pic-carga"><i class="fa-solid fa-camera"></i><span>Foto Resíduos</span></div>
+                </div>
+            </div>
+
+            <div class="protocolo-card disabled" id="card-p5">
+                <div class="card-header-title">5. Transmissão do Lote Público</div>
+                <div style="font-size: 0.85rem; color: var(--text-support);">Envelopar e despachar todas as evidências com assinatura digital do dispositivo:</div>
+                <button class="btn-action" id="btn-p5" onclick="executarPasso5()">Transmitir Lote para a Prefeitura</button>
+            </div>
+
+            <div class="purge-timer-box">
+                <i class="fa-solid fa-triangle-exclamation" style="color: var(--brand-orange); margin-bottom: 5px; font-size: 1rem;"></i><br>
+                <strong>Diretriz Forense de Limpeza Estrita:</strong><br>
+                <span id="purge-text">Para proteção e conformidade de armazenamento do dispositivo, as mídias locais expirarão em 48hs após o encerramento.</span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api/v1/citymobile';
+        let missaoId = null;
+        let odometroSimulado = 0;
+
+        // Passo 1: Dispara o portão de coleta
+        async function executarPasso1() {
+            const rotaSelecionada = document.getElementById('sel-rota-publica').value;
+            missaoId = `MS-CITY-${Math.floor(Math.random() * 90000) + 10000}`;
+
+            try {
+                const response = await fetch(`${API_URL}/mission/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rota_numero: rotaSelecionada, concessionaria: "Ecolurbe Ambiental", id_missao: missaoId })
+                });
+
+                if (response.ok) {
+                    document.getElementById('badge-m-id').textContent = missaoId;
+                    document.getElementById('badge-m-id').style.color = "var(--brand-green-light)";
+                    
+                    const cardP1 = document.getElementById('card-p1');
+                    cardP1.className = "protocolo-card success";
+                    document.getElementById('btn-p1').disabled = true;
+                    document.getElementById('btn-p1').textContent = "Missão Aberta ✓";
+
+                    // Libera Passo 2 (Telemetria)
+                    const cardP2 = document.getElementById('card-p2');
+                    cardP2.className = "protocolo-card active";
+                    cardP2.style.opacity = "1";
+                    cardP2.style.pointerEvents = "auto";
+                    document.getElementById('btn-p2').className = "btn-action btn-prime";
+                    document.getElementById('log-gps-city').textContent = "🛰️ Conexão de GPS ativa. Aguardando deslocamento.";
+                }
+            } catch (err) {
+                alert("Erro de comunicação com o API Gateway do mrvTRUST.");
+            }
+        }
+
+        // Passo 2: Simulação rigorosa do ping de telemetria a cada 3km
+        async function executarPasso2() {
+            odometroSimulado += 3;
+            const latMock = -23.5512 - (Math.random() * 0.015);
+            const lngMock = -46.6334 + (Math.random() * 0.015);
+
+            try {
+                const response = await fetch(`${API_URL}/mission/gps-ping`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_missao: missaoId, latitude: latMock, longitude: lngMock, km_marcado: odometroSimulado })
+                });
+
+                if (response.ok) {
+                    const consoleGps = document.getElementById('log-gps-city');
+                    if (odometroSimulado === 3) consoleGps.innerHTML = "";
+                    consoleGps.innerHTML += `▶️ Registro: ${odometroSimulado}km | Lat: ${latMock.toFixed(4)} Lng: ${lngMock.toFixed(4)}<br>`;
+                    consoleGps.scrollTop = consoleGps.scrollHeight;
+
+                    // Exigência: Ao registrar pelo menos 6km de rota, libera o Passo 3/4 de Balança
+                    if (odometroSimulado >= 6) {
+                        const cardP3 = document.getElementById('card-p3');
+                        cardP3.className = "protocolo-card active";
+                        cardP3.style.opacity = "1";
+                        cardP3.style.pointerEvents = "auto";
+                        document.getElementById('btn-p3').className = "btn-action btn-prime";
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Passo 3 e 4: Batimento fotográfico e metrológico na balança
+        function ejecutarPasso3() {
+            const bBox = document.getElementById('pic-balanca');
+            const cBox = document.getElementById('pic-carga');
+            
+            bBox.className = "photo-box captured";
+            bBox.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>Balança OK</span>`;
+            
+            cBox.className = "photo-box captured";
+            cBox.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>Carga OK</span>`;
+
+            document.getElementById('btn-p3').disabled = true;
+            document.getElementById('btn-p3').textContent = "Evidências Vinculadas ✓";
+            document.getElementById('card-p3').className = "protocolo-card success";
+
+            // Libera Passo 5 (Upload)
+            const cardP5 = document.getElementById('card-p5');
+            cardP5.className = "protocolo-card active";
+            cardP5.style.opacity = "1";
+            cardP5.style.pointerEvents = "auto";
+            document.getElementById('btn-p5').className = "btn-action btn-prime";
+        }
+
+        // Passo 5 e 6: Despacha o pacote e engatilha o cronômetro forense local de 48h
+        async function executarPasso5() {
+            const packPayload = {
+                id_missao: missaoId,
+                pesagem: { peso_bruto: 12.8, tara: 8.6, timestamp: new Date().toISOString(), foto_balanca: "raw_b64_img_ticket" },
+                descarregamento: { foto_residuos: "raw_b64_img_residuos", destino: "Cooperativa União Norte", timestamp: new Date().toISOString() }
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/mission/upload-pack`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(packPayload)
+                });
+
+                if (response.ok) {
+                    document.getElementById('btn-p5').disabled = true;
+                    document.getElementById('btn-p5').textContent = "Transmitido para a Nuvem ✓";
+                    document.getElementById('card-p5').className = "protocolo-card success";
+                    
+                    // Passo 6 ativado visualmente
+                    document.getElementById('purge-text').innerHTML = `<span style="color:var(--danger-red); font-weight:bold;"><i class="fa-solid fa-clock-rotate-left"></i> CRONÔMETRO DE AUTOLIMPEZA ATIVO:</span> Todas as mídias em cache local deste dispositivo serão eliminadas permanentemente em 48 horas para liberação de memória interna.`;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>

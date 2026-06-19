@@ -17,3 +17,12 @@ dist/
 # Logs do Sistema e do Docker
 *.log
 npm-debug.log*
+
+# Ignorar volumes físicos do banco de dados Docker
+pgdata/
+.db_data/
+
+# Ignorar dumps e ficheiros de log binários
+*.sql
+*.log
+.env

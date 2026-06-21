@@ -17,6 +17,8 @@
             --brand-green-light: #2ecc71;
             --simulation-red: #e74c3c;
             --brand-orange: #f39c12;
+            --chart-purple: #9b59b6;
+            --chart-cyan: #1abc9c;
         }
 
         body {
@@ -31,6 +33,7 @@
             overflow: hidden;
         }
 
+        /* MARQUEE SUPERIOR */
         .marquee-superior {
             background-color: var(--bg-panel);
             border-bottom: 2px solid var(--border-color);
@@ -44,6 +47,7 @@
         .marquee-title { font-size: 1.4rem; font-weight: 600; color: var(--text-main); text-transform: uppercase; }
         .status-pill { background: var(--bg-input); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.8rem; border-left: 4px solid var(--gov-blue); }
 
+        /* WORKSPACE GRID */
         .main-workspace {
             display: grid;
             grid-template-columns: 260px 1fr;
@@ -51,6 +55,7 @@
             overflow: hidden;
         }
 
+        /* COLUNA ESQUERDA - NAVEGAÇÃO */
         .coluna-esquerda {
             background-color: #111114;
             padding: 20px 0;
@@ -60,45 +65,84 @@
             border-right: 1px solid var(--border-color);
         }
         .menu-list { list-style: none; padding: 0; margin: 0; }
-        .menu-item { padding: 15px 25px; color: var(--text-main); display: flex; align-items: center; gap: 12px; text-decoration: none; font-size: 0.95rem; }
-        .menu-item.active { background-color: rgba(37, 99, 235, 0.1); font-weight: bold; border-left: 4px solid var(--gov-blue); }
+        .menu-item { padding: 15px 25px; color: var(--text-main); display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; font-size: 0.95rem; transition: 0.2s; user-select: none; }
+        .menu-item:hover { background-color: rgba(255,255,255,0.04); }
+        .menu-item.active { background-color: rgba(37, 99, 235, 0.1); font-weight: bold; border-left: 4px solid var(--gov-blue); color: white; }
 
-        .content-center {
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
+        /* PAGINAÇÃO INTERNA VIA TABS */
+        .page-view { display: none; flex-direction: column; padding: 20px; gap: 20px; overflow-y: auto; height: calc(100vh - 110px); }
+        .page-view.active { display: flex; }
+
+        /* LAYOUT DA AREA CENTRAL */
+        .central-dashboard-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
             gap: 20px;
-            overflow-y: auto;
         }
+        .charts-block-main { display: flex; flex-direction: column; gap: 20px; }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-        .kpi-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+        /* KPIS SUPERIORES */
+        .kpi-grid-horizontal { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .kpi-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; border-left: 4px solid var(--gov-blue); }
+        .kpi-card.org { border-left-color: var(--brand-green-light); }
         .kpi-card h4 { margin: 0; font-size: 0.75rem; text-transform: uppercase; color: var(--text-support); }
-        .kpi-card p { margin: 5px 0 0 0; font-size: 1.4rem; font-weight: bold; }
+        .kpi-card p { margin: 5px 0 0 0; font-size: 1.3rem; font-weight: bold; }
+        .kpi-sub { font-size: 0.75rem; color: var(--text-support); margin-top: 4px; display: block; }
 
+        /* GRÁFICOS PIZZA */
         .core-canvas { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
-        .canvas-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-
-        .routes-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .routes-table th { text-align: left; padding: 12px; background: var(--bg-input); color: var(--text-support); font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
-        .routes-table td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
-        .fraction-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .fraction-badge.seco { background: rgba(52, 152, 219, 0.15); color: #3498db; }
-        .fraction-badge.umido { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
-
-        .permissions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
-        .perm-card { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .perm-info h5 { margin: 0; font-size: 0.9rem; }
-        .perm-info span { font-size: 0.75rem; color: var(--text-support); }
+        .canvas-title { font-size: 1rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; color: var(--text-main); }
+        .pizza-chart-container { display: flex; align-items: center; gap: 30px; justify-content: space-around; padding: 10px 0; }
+        .svg-pie { transform: rotate(-90deg); border-radius: 50%; }
         
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3e3e42; transition: .3s; border-radius: 22px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--brand-green-light); }
-        input:checked + .slider:before { transform: translateX(22px); }
+        /* LEGENDAS */
+        .chart-legend-box { display: flex; flex-direction: column; gap: 8px; min-width: 240px; }
+        .legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; }
+        .legend-tag { display: flex; align-items: center; gap: 8px; color: var(--text-support); }
+        .color-dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+        .legend-val { font-weight: bold; color: var(--text-main); }
 
-        .footer-compliance { background: rgba(37, 99, 235, 0.03); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 8px; padding: 15px; font-size: 0.85rem; color: var(--text-support); display: flex; justify-content: space-between; align-items: center; }
+        /* COLUNA DIREITA */
+        .sidebar-right-metrics { display: flex; flex-direction: column; gap: 20px; }
+        .side-block { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
+        .side-block h3 { margin: 0 0 12px 0; font-size: 0.85rem; text-transform: uppercase; color: var(--brand-orange); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .side-row { display: flex; flex-direction: column; margin-bottom: 12px; font-size: 0.9rem; gap: 2px; }
+        .side-row span { color: var(--text-support); font-size: 0.75rem; text-transform: uppercase; }
+        .side-val { font-weight: bold; font-size: 1.1rem; color: var(--text-main); }
+
+        /* TABELA DE CONSOLIDADORES */
+        .consolidators-list-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: var(--bg-panel); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        .consolidators-list-table th { text-align: left; padding: 15px; background: var(--bg-input); color: var(--text-support); font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
+        .consolidators-list-table td { padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; color: var(--text-main); }
+        .row-selectable { cursor: pointer; transition: 0.2s; }
+        .row-selectable:hover { background: rgba(37, 99, 235, 0.05); }
+        .status-badge-shared { background: rgba(46, 204, 113, 0.15); color: var(--brand-green-light); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+
+        /* POPUP MODAL FORENSE RESPONSIVO */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-box-scrollable { background: var(--bg-panel); border: 2px solid var(--border-color); border-radius: 12px; width: 220mm; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.6); }
+        .modal-close-btn { position: absolute; top: 20px; right: 25px; background: #202024; border: 1px solid var(--border-color); color: var(--text-support); font-size: 1.2rem; cursor: pointer; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; z-index: 1010; transition: 0.2s; }
+        .modal-close-btn:hover { color: var(--simulation-red); border-color: var(--simulation-red); }
+
+        /* INJEÇÃO DOS ESTILOS DA FICHA DIRETAMENTE NO HEADER */
+        .ficha-container { width: 100%; max-width: 210mm; margin: 0 auto; background: #ffffff; color: #2d3748; font-family: 'Segoe UI', system-ui, Arial, sans-serif; font-size: 13px; line-height: 1.4; padding: 20px; box-sizing: border-box; }
+        .ficha-header { border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .ficha-header h2 { font-size: 18px; color: #2563eb; margin: 0; text-transform: uppercase; font-weight: 700; }
+        .selo-trust-badge { background: rgba(37, 99, 235, 0.08); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.2); padding: 4px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+        .ficha-section { margin-bottom: 15px; }
+        .section-title-bar { font-size: 11px; font-weight: 700; color: #4a5568; background: #edf2f7; padding: 4px 8px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 4px; }
+        .grid-dados-ficha { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 5px; }
+        .dado-bloco { display: flex; flex-direction: column; }
+        .dado-bloco.span-2 { grid-column: span 2; }
+        .dado-bloco.span-4 { grid-column: span 4; }
+        .dado-label-txt { font-size: 9px; text-transform: uppercase; color: #718096; font-weight: 600; margin-bottom: 2px; }
+        .dado-valor-txt { font-size: 13px; font-weight: 500; color: #1a202c; }
+        .ficha-table-forense { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .ficha-table-forense th { background: #f7fafc; color: #4a5568; font-size: 10px; text-transform: uppercase; font-weight: 600; text-align: left; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; }
+        .ficha-table-forense td { padding: 6px 8px; font-size: 12px; border-bottom: 1px solid #edf2f7; color: #2d3748; }
+        .badge-equip-item { display: inline-block; background: #e6fffa; color: #234e52; border: 1px solid #b2f5ea; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 5px; margin-bottom: 5px; font-weight: 500; }
+        .badge-equip-item.ausente { background: #fff5f5; color: #742a2a; border: 1px solid #fed7d7; }
     </style>
 </head>
 <body>
@@ -107,111 +151,297 @@
         <div class="brand-box">
             <div class="logo-placeholder">Prefeitura Municipal</div>
         </div>
-        <div class="marquee-title">PMGIRS - Portal de Governança e Fiscalização</div>
+        <div class="marquee-title">PMGIRS - Portal de Governança e Fiscalização Municipal</div>
         <div class="status-pill"><i class="fa-solid fa-shield-halved"></i> mrvTRUST Master Node</div>
     </header>
 
     <div class="main-workspace">
         <nav class="coluna-esquerda">
             <ul class="menu-list">
-                <li><a href="#" class="menu-item active"><i class="fa-solid fa-city"></i> Balanço do Município</a></li>
-                <li><a href="#" class="menu-item"><i class="fa-solid fa-route"></i> Rotas Operacionais</a></li>
-                <li><a href="#" class="menu-item"><i class="fa-solid fa-handshake-angle"></i> Fundo Social Catadores</a></li>
+                <li id="menu-lnk-tab1" class="menu-item active"><i class="fa-solid fa-city"></i> Balanço do Município</li>
+                <li id="menu-lnk-tab2" class="menu-item"><i class="fa-solid fa-warehouse"></i> Lista de Consolidadores</li>
             </ul>
             <div style="padding: 0 25px; font-size: 0.75rem; color: var(--text-support);">
-                Gestão PMGIRS · v2.0
+                Gestão PMGIRS · v2.1.3
             </div>
         </nav>
 
-        <main class="content-center">
-            <section class="kpi-grid">
-                <div class="kpi-card"><h4>Massa Pública Homologada</h4><p id="kpi-massa-city">5.70 t</p></div>
-                <div class="kpi-card"><h4>Romaneios Auditados</h4><p style="color: var(--brand-green-light);">100% Conformidade</p></div>
-                <div class="kpi-card"><h4>Pool Social Repassado (70%)</h4><p style="color: var(--brand-green-light);">R$ 99.750</p></div>
-                <div class="kpi-card"><h4>Créditos Ambientais Gerados</h4><p style="color: var(--gov-blue);">5.70 CO2eq</p></div>
-            </section>
+        <main class="page-view active" id="view-pagina1">
+            <div class="central-dashboard-layout">
+                <div class="charts-block-main">
+                    <section class="kpi-grid-horizontal">
+                        <div class="kpi-card">
+                            <h4>Coleta Recicláveis Domiciliares / Zeladoria</h4>
+                            <p>4.70 t</p>
+                            <span class="kpi-sub"><i class="fa-solid fa-leaf"></i> Est. CO₂ Evitado: 11.51 tCO₂eq</span>
+                        </div>
+                        <div class="kpi-card org">
+                            <h4>Coleta Resíduos Orgânicos Compostáveis</h4>
+                            <p>2.30 t</p>
+                            <span class="kpi-sub"><i class="fa-solid fa-leaf"></i> Est. CO₂ Evitado: 5.63 tCO₂eq</span>
+                        </div>
+                    </section>
 
-            <section class="core-canvas">
-                <div class="canvas-title">
-                    <span><i class="fa-solid fa-sliders"></i> Portas de Acesso de Dados (Concessionária)</span>
-                    <span style="font-size: 0.8rem; color: var(--brand-orange);"><i class="fa-solid fa-circle-user"></i> Gestor como Única Autoridade</span>
-                </div>
-                <div class="permissions-grid">
-                    <div class="perm-card">
-                        <div class="perm-info"><h5>Pesos Fiscais</h5><span>Acesso a balança homologada</span></div>
-                        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                    </div>
-                    <div class="perm-card">
-                        <div class="perm-info"><h5>Telemetria de Rotas GPS</h5><span>Histórico e distâncias das frotas</span></div>
-                        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                    </div>
-                    <div class="perm-card">
-                        <div class="perm-info"><h5>Indicadores de Destinação</h5><span>Gráficos de recebimento do Hub</span></div>
-                        <label class="switch"><input type="checkbox"><span class="slider"></span></label>
-                    </div>
-                </div>
-            </section>
+                    <section class="core-canvas">
+                        <div class="canvas-title">1) Procedência dos Volumes de Reciclados (Massa Entrante Consolidada)</div>
+                        <div class="pizza-chart-container">
+                            <svg class="svg-pie" width="160" height="160" viewBox="0 0 32 32">
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--brand-orange)" stroke-width="32" stroke-dasharray="10 100" stroke-dashoffset="0" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--gov-blue)" stroke-width="32" stroke-dasharray="42 100" stroke-dashoffset="-10" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--brand-green-light)" stroke-width="32" stroke-dasharray="13 100" stroke-dashoffset="-52" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--chart-cyan)" stroke-width="32" stroke-dasharray="5 100" stroke-dashoffset="-65" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--chart-purple)" stroke-width="32" stroke-dasharray="10 100" stroke-dashoffset="-70" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="#34495e" stroke-width="32" stroke-dasharray="20 100" stroke-dashoffset="-80" />
+                            </svg>
+                            <div class="chart-legend-box">
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--brand-orange)"></span>Catadores Avulsos</span><span class="legend-val">1.00 t (10%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--gov-blue)"></span>Coleta Pública (Secos)</span><span class="legend-val">4.20 t (42%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--brand-green-light)"></span>Coleta Pública (Orgânicos)</span><span class="legend-val">1.30 t (13%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--chart-cyan)"></span>Varrição (Secos)</span><span class="legend-val">0.50 t (5%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--chart-purple)"></span>Praças/Jardins (Orgânicos)</span><span class="legend-val">1.00 t (10%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:#34495e"></span>Grandes Geradores</span><span class="legend-val">2.00 t (20%)</span></div>
+                            </div>
+                        </div>
+                    </section>
 
+                    <section class="core-canvas">
+                        <div class="canvas-title">2) Gravimetria Consolidada das Frações Homologadas</div>
+                        <div class="pizza-chart-container">
+                            <svg class="svg-pie" width="160" height="160" viewBox="0 0 32 32">
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--gov-blue)" stroke-width="32" stroke-dasharray="40 100" stroke-dashoffset="0" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--brand-green-light)" stroke-width="32" stroke-dasharray="23 100" stroke-dashoffset="-40" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--simulation-red)" stroke-width="32" stroke-dasharray="22 100" stroke-dashoffset="-63" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="var(--brand-orange)" stroke-width="32" stroke-dasharray="5 100" stroke-dashoffset="-85" />
+                                <circle r="16" cx="16" cy="16" fill="transparent" stroke="#7f8c8d" stroke-width="32" stroke-dasharray="10 100" stroke-dashoffset="-90" />
+                            </svg>
+                            <div class="chart-legend-box">
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--gov-blue)"></span>Papelão Ondulado</span><span class="legend-val">4.00 t (40%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--brand-green-light)"></span>Resíduos Orgânicos</span><span class="legend-val">2.30 t (23%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--simulation-red)"></span>Rejeitos Operacionais</span><span class="legend-val">2.20 t (22%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:var(--brand-orange)"></span>Metais Ferrosos / Alumínio</span><span class="legend-val">0.50 t (5%)</span></div>
+                                <div class="legend-item"><span class="legend-tag"><span class="color-dot" style="background:#7f8c8d"></span>Outras Frações Secas</span><span class="legend-val">1.00 t (10%)</span></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="sidebar-right-metrics">
+                    <div class="side-block">
+                        <h3>Desempenho Comercialização</h3>
+                        <div class="side-row"><span>Matéria-Secunda Comercializada</span><div class="side-val">3.50 t</div><small style="color:var(--gov-blue)">Evitado: 8.57 tCO₂eq</small></div>
+                        <div class="side-row"><span>Composto Orgânico Produzido</span><div class="side-val">1.15 t</div><small style="color:var(--brand-green-light)">Evitado: 2.81 tCO₂eq</small></div>
+                    </div>
+                    <div class="side-block">
+                        <h3>Indicadores Sociais</h3>
+                        <div class="side-row"><span>Efectivo Total Cooperado</span><div class="side-val">38 Trabalhadores</div></div>
+                        <div class="side-row"><span>Mulheres em Atuação</span><div class="side-val" style="color:var(--chart-purple)">12 Cooperadas (32%)</div></div>
+                        <div class="side-row"><span>Homens em Atuação</span><div class="side-val" style="color:var(--chart-cyan)">26 Cooperados (68%)</div></div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+
+        <main class="page-view" id="view-pagina2">
             <section class="core-canvas">
-                <div class="canvas-title"><i class="fa-solid fa-map-location-dot"></i> Painel Operacional de Rotas Urbanas Activas</div>
-                <table class="routes-table">
+                <div class="canvas-title"><i class="fa-solid fa-list-check"></i> Consolidadores Homologados no Município</div>
+                <div style="font-size: 0.9rem; color: var(--text-support); margin-bottom: 15px;">Selecione uma instalação integrada para abrir a auditoria detalhada do mrvTRUST em tempo real:</div>
+                
+                <table class="consolidators-list-table">
                     <thead>
                         <tr>
-                            <th>Identificador</th>
-                            <th>Fração</th>
-                            <th>Frequência</th>
-                            <th>Operador / Concessionário</th>
-                            <th>Ativo / Veículo</th>
-                            <th>Massa Homologada</th>
+                            <th>Nome do Consolidador</th>
+                            <th>Natureza Jurídica</th>
+                            <th>Massa Controlada (Mês)</th>
+                            <th>Status de Compartilhamento</th>
                         </tr>
                     </thead>
-                    <tbody id="routes-tbody">
-                        <tr>
-                            <td><strong>RT-DOM-001</strong></td>
-                            <td><span class="fraction-badge seco">Sólidos Inertes (Secos)</span></td>
-                            <td>Ter / Qui / Sáb</td>
-                            <td>Ecolurbe Ambiental Ltda</td>
-                            <td>Caminhão Compactador #08</td>
-                            <td><strong>2.10 t</strong></td>
+                    <tbody>
+                        <tr class="row-selectable" data-id="coop-guarara">
+                            <td><strong>Cooperativa Recicla Guarará</strong></td>
+                            <td>Cooperativa de Catadores Autônomos</td>
+                            <td>4.30 t</td>
+                            <td><span class="status-badge-shared">Integrado PMGIRS</span></td>
                         </tr>
-                        <tr>
-                            <td><strong>RT-DOM-002</strong></td>
-                            <td><span class="fraction-badge seco">Sólidos Inertes (Secos)</span></td>
-                            <td>Seg / Qua / Sex</td>
-                            <td>Ecolurbe Ambiental Ltda</td>
-                            <td>Caminhão Compactador #12</td>
-                            <td><strong>2.10 t</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>RT-ZEL-001</strong></td>
-                            <td><span class="fraction-badge umido">Zeladoria (Podas/Verde)</span></td>
-                            <td>Diário Útil</td>
-                            <td>Murban Serviços Urbanos</td>
-                            <td>Caminhão Gaiola #45</td>
-                            <td><strong>1.00 t</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>RT-ZEL-002</strong></td>
-                            <td><span class="fraction-badge seco">Zeladoria (Varrição)</span></td>
-                            <td>Diário Útil</td>
-                            <td>Murban Serviços Urbanos</td>
-                            <td>Caminhão Basculante #22</td>
-                            <td><strong>0.50 t</strong></td>
+                        <tr class="row-selectable" data-id="galpao-ecolurbe">
+                            <td><strong>Galpão Concessionária Ecolurbe</strong></td>
+                            <td>Concessionária Pública de Limpeza</td>
+                            <td>5.70 t</td>
+                            <td><span class="status-badge-shared">Integrado PMGIRS</span></td>
                         </tr>
                     </tbody>
                 </table>
             </section>
-
-            <footer class="footer-compliance">
-                <div>
-                    <i class="fa-solid fa-circle-check" style="color: var(--brand-green-light);"></i> 
-                    <strong>PMGIRS Compliance:</strong> Todos os romaneios de rotas acima batem 100% com as entradas físicas registradas no Hub.
-                </div>
-                <button style="background: var(--gov-blue); border: none; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">
-                    <i class="fa-solid fa-stamp"></i> Emitir CHF Municipal
-                </button>
-            </footer>
         </main>
     </div>
+
+    <div class="modal-overlay" id="modal-auditoria">
+        <div class="modal-box-scrollable">
+            <button class="modal-close-btn" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            <div id="modal-canvas-target"></div>
+        </div>
+    </div>
+
+    <script>
+        // Função Geradora da Ficha Localizada Internamente para Evitar Erros de MIME-Type
+        function gerarTemplateFichaLocal(ente) {
+            const listaEquipamentos = ente.equipamentos ? ente.equipamentos.map(eq => {
+                const isDisponivel = !eq.startsWith('✗');
+                return `<span class="badge-equip-item ${isDisponivel ? '' : 'ausente'}">${eq}</span>`;
+            }).join('') : '';
+
+            const linhasHistorico = ente.historico ? ente.historico.map(h => `
+                <tr>
+                    <td><b>${h.mes}</b></td>
+                    <td>${h.plasticos}</td>
+                    <td>${h.papelao}</td>
+                    <td>${h.metais}</td>
+                    <td>${h.vidro}</td>
+                    <td style="color: ${h.status.includes('✓') ? '#2ecc71' : '#f39c12'}; font-weight: bold;">${h.status}</td>
+                </tr>
+            `).join('') : '';
+
+            return `
+                <div class="ficha-container">
+                    <div class="ficha-header">
+                        <div>
+                            <h2>Ficha de Detalhe da Consolidadora</h2>
+                            <span style="font-size: 11px; color: #718096;">ID Registro mrvTRUST: ${ente.id}</span>
+                        </div>
+                        <div class="selo-trust-badge">mrvTRUST Verified Node</div>
+                    </div>
+
+                    <div class="ficha-section">
+                        <div class="section-title-bar">1. Identificação Legal e Contato</div>
+                        <div class="grid-dados-ficha">
+                            <div class="dado-bloco span-2"><span class="dado-label-txt">Razão Social</span><span class="dado-valor-txt">${ente.nome}</span></div>
+                            <div class="dado-bloco span-2"><span class="dado-label-txt">CNPJ</span><span class="dado-valor-txt">${ente.cnpj}</span></div>
+                            <div class="dado-bloco span-4"><span class="dado-label-txt">Endereço Operacional Homologado</span><span class="dado-valor-txt">${ente.endereco}</span></div>
+                            <div class="dado-bloco"><span class="dado-label-txt">Telefone</span><span class="dado-valor-txt">${ente.telefone}</span></div>
+                            <div class="dado-bloco span-2"><span class="dado-label-txt">E-mail de Contato</span><span class="dado-valor-txt">${ente.email}</span></div>
+                            <div class="dado-bloco"><span class="dado-label-txt">Natureza Jurídica</span><span class="dado-valor-txt">${ente.natureza}</span></div>
+                        </div>
+                    </div>
+
+                    <div class="ficha-section">
+                        <div class="section-title-bar">2. Governança e Capital Humano</div>
+                        <div class="grid-dados-ficha">
+                            <div class="dado-bloco span-2"><span class="dado-label-txt">Nome do Administrador</span><span class="dado-valor-txt">${ente.administrador}</span></div>
+                            <div class="dado-bloco"><span class="dado-label-txt">Efectivo Feminino</span><span class="dado-valor-txt">${ente.mulheres} operadoras</span></div>
+                            <div class="dado-bloco"><span class="dado-label-txt">Efectivo Masculino</span><span class="dado-valor-txt">${ente.homens} operadores</span></div>
+                        </div>
+                    </div>
+
+                    <div class="ficha-section">
+                        <div class="section-title-bar">3. Infraestrutura Operacional e Ativos Principais</div>
+                        <div style="padding: 5px 5px 0 5px;">${listaEquipamentos}</div>
+                    </div>
+
+                    <div class="ficha-section">
+                        <div class="section-title-bar">4. Histórico de Comercialização - Matéria-Secunda</div>
+                        <table class="ficha-table-forense">
+                            <thead>
+                                <tr><th>Período</th><th>Plásticos (T)</th><th>Papelão (T)</th><th>Metais (T)</th><th>Vidro (T)</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>${linhasHistorico}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        const dbConsolidadores = {
+            "coop-guarara": {
+                id: "#CS-2026-001",
+                nome: "Cooperativa Recicla Guarará",
+                cnpj: "44.123.987/0001-10",
+                endereco: "Rua das Oficinas, 450 - Galpão B - Distrito Industrial - Santo André - SP",
+                telefone: "(11) 4422-9100",
+                email: "contato@reciclaguarara.org",
+                natureza: "Cooperativa de Catadores Autônomos",
+                administrador: "Carlos Silva (Presidente)",
+                mulheres: 12,
+                homens: 26,
+                equipamentos: [
+                    "✓ Esteira de Triagem Mecanizada (12m)",
+                    "✓ Prensa Hidráulica para Plásticos (15T)",
+                    "✓ Prensa Vertical para Alumínio",
+                    "✓ Empilhadeira Elétrica (2.5T)",
+                    "✓ Balança Rodoviária Homologada (Inmetro 2025)",
+                    "✗ Grua / Guindaste Articulado"
+                ],
+                historico: [
+                    { mes: "Março / 2026", plasticos: "14.2 T", papelao: "22.5 T", metais: "4.1 T", vidro: "8.0 T", status: "✓ Consolidado" },
+                    { mes: "Abril / 2026", plasticos: "16.8 T", papelao: "19.2 T", metais: "5.3 T", vidro: "9.5 T", status: "✓ Consolidado" },
+                    { mes: "Maio / 2026", plasticos: "15.1 T", papelao: "24.0 T", metais: "3.9 T", vidro: "7.2 T", status: "✓ Consolidado" },
+                    { mes: "Junho / 2026", plasticos: "09.4 T", papelao: "11.3 T", metais: "2.0 T", vidro: "4.1 T", status: "⟳ Em Curso" }
+                ]
+            },
+            "galpao-ecolurbe": {
+                id: "#CS-2026-002",
+                nome: "Galpão Concessionária Ecolurbe",
+                cnpj: "12.445.678/0002-44",
+                endereco: "Av. Marginal do Hub, 2100 - Setor Logístico - Santo André - SP",
+                telefone: "(11) 4999-3311",
+                email: "operacoes@ecolurbeambiental.com.br",
+                natureza: "Empresa Concessionária de Limpeza Pública",
+                administrador: "Eng. Marcelo Fontes (Diretor Operacional)",
+                mulheres: 5,
+                homens: 32,
+                equipamentos: [
+                    "✓ Balança Rodoviária Automatizada (mrvTRUST API)",
+                    "✓ 2x Prensas Jacaré de Alta Capacidade (30T)",
+                    "✓ Sistema Separador Magnético Automático",
+                    "✓ 3x Empilhadeiras Diesel Múltiplas",
+                    "✗ Pátio de Compostagem Acelerada (Ausente)"
+                ],
+                historico: [
+                    { mes: "Março / 2026", plasticos: "32.0 T", papelao: "45.1 T", metais: "12.8 T", vidro: "14.0 T", status: "✓ Consolidado" },
+                    { mes: "Abril / 2026", plasticos: "29.4 T", papelao: "51.0 T", metais: "14.2 T", vidro: "11.2 T", status: "✓ Consolidado" },
+                    { mes: "Maio / 2026", plasticos: "35.1 T", papelao: "48.9 T", metais: "11.0 T", vidro: "15.6 T", status: "✓ Consolidado" },
+                    { mes: "Junho / 2026", plasticos: "18.2 T", papelao: "22.1 T", metais: "06.4 T", vidro: "08.0 T", status: "⟳ Em Curso" }
+                ]
+            }
+        };
+
+        // AMARRAÇÃO DOS EVENTOS DO MENU LATERAL (SPA COMPORTAMENTO)
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnTab1 = document.getElementById('menu-lnk-tab1');
+            const btnTab2 = document.getElementById('menu-lnk-tab2');
+            const pageView1 = document.getElementById('view-pagina1');
+            const pageView2 = document.getElementById('view-pagina2');
+
+            btnTab1.addEventListener('click', () => {
+                btnTab2.classList.remove('active');
+                btnTab1.classList.add('active');
+                pageView2.classList.remove('active');
+                pageView1.classList.add('active');
+            });
+
+            btnTab2.addEventListener('click', () => {
+                btnTab1.classList.remove('active');
+                btnTab2.classList.add('active');
+                pageView1.classList.remove('active');
+                pageView2.classList.add('active');
+            });
+
+            // GATILHO DE CLIQUE NA TABELA PARA EXIBIÇÃO DA FICHA
+            document.querySelectorAll('.row-selectable').forEach(row => {
+                row.addEventListener('click', () => {
+                    const idEnte = row.getAttribute('data-id');
+                    const dadosEnte = dbConsolidadores[idEnte];
+                    
+                    if (dadosEnte) {
+                        const canvas = document.getElementById('modal-canvas-target');
+                        canvas.innerHTML = gerarTemplateFichaLocal(dadosEnte);
+                        document.getElementById('modal-auditoria').classList.add('active');
+                    }
+                });
+            });
+
+            document.getElementById('btn-close-modal').addEventListener('click', () => {
+                document.getElementById('modal-auditoria').classList.remove('active');
+            });
+        });
+    </script>
 </body>
 </html>

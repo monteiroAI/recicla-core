@@ -102,6 +102,73 @@ O motor analítico do `recycle` processará a massa de dados das Coletas Domicil
 O gestor público opera o mrvTRUST a partir do seu Painel de Controle, com os indicadores préviamente consensados com a administração pública. 
 No âmbito operacional, tanto o gestor público como o Concessionária Pública de Coleta terão acesso a um painel Operacional, com dados das Rotas de coleta e os dados por elas gerados. O cliente final será sempre o Gestor Público Municipal, o qual poderá estabelecer quais os dados ficarão acessíveis ao concessionario. 
 
+## PAINEL DE CONTROLE DO ADMINISTRADOR PÚBLICO
+Conteúdos prioritários - na área central do dashboard
+
+1) Gráfico Pizza - Procedência (origens) dos volumes de reciclados apresentando o somatório dos volumes de entrada de  todos os Consolidadores que operam na cidade, exibindo as seguintes origens e respectivos volume (Peso e % em relação ao total da massa entrante)
+
+Catadores
+Coleta Pública - resíduos sólidos recicláveis
+Coleta pÚblica - resíduos orgânicos
+Varrição de Ruas - resíduos sólidos recicláveis
+Manutenção de Praças e Jardins - resíduos orgânicos
+Grandes Geradores (industria e comercio)
+
+2) Gráfico Pizza - Gravimetria consolidada de todos os Consolidadores que operam no município
+
+Na barra de KPI's e coluna direita: 
+
+KPI 1 - Coleta de Resíduos Sólidos Recicláveis no Município em Toneladas (somatório de todos os Consolidadores). Exibir a estimativa de CO2 equivalente. 
+KPI 2 - Coleta de Resíduos Orgânicos Compostáveis no Município em Toneladas (somatorio de todos os páteos de compostagem no municíoio)  Exibir a estimativa de CO2 equivalente
+KPI 3 - Toneladas de Matéria-Secunda comercializada no município / Estimativa de CO2 equivalente evitado
+KPI 4 - Toneladas de Composto Orgânico produzido no município / Estimativa de CO2 equivalente evitado
+KPI 5 - Número de cooperados em atuação no município (exibir em detalhe número de Mulheres e Homens)
+
+
+Na coluna Esquerda, link para uma 
+
+Segunda página 
+exibindo a Lista Alfabética de Todos os Consolidadores em operação no município (Cooperativas e galpões de concessionaria)
+
+Cada nome de consolidador, se selecionado, leva a um popup ou nova página exibindo detalhes presentes no Dashboard do COnsolidador (se a cooperativa está integrada ao PMGIRS os seus dados tornam-se compatilhados para a gestão municipal)
+
+
+# PMGIRS - Protocolo Metrológico de Combate a Fraudes de Tara (mrvTRUST)
+
+A pesagem de caminhões compactadores de coleta pública exige rigor metrológico superior devido à volatilidade de seus componentes internos (óleo hidráulico da prensa, tanques de chorume e combustível) e à incidência histórica de fraudes baseadas em lastros artificiais (reservatórios de água descartáveis). 
+
+---
+
+## 1. Variáveis Críticas da TARA Mecânica
+Diferente de frotas comerciais padrão, a TARA de um compactador de resíduos urbanos é composta por fatores altamente oscilantes:
+* **Fluido Hidráulico:** Variações de pressão e temperatura alteram a viscosidade e o volume efetivo no reservatório da prensa de compactação.
+* **Chorume Retido:** O acúmulo de líquido percolado nas moegas inferiores altera o peso de saída se o caminhão não for drenado corretamente em ponto homologado.
+* **Combustível:** Um tanque cheio versus na reserva pode gerar uma discrepância física de até $300\text{ kg}$.
+
+---
+
+## 2. Matriz de Gatilhos Forenses e Amostragem Aleatória
+O sistema **mrvTRUST** implementa um motor preditivo no gateway de dados que calcula a expectativa de flutuação da TARA. Caso o veículo viole os limites matemáticos estabelecidos, o lote é preventivamente **Retido na Blockchain** para auditoria visual.
+
+| Evento de Campo | Indicador de Anomalia | Ação Automatizada mrvTRUST | Impacto no CHF Municipal |
+| :--- | :--- | :--- | :--- |
+| **Pesagem de Saída (Vazio)** | Desvio $> \pm 1.5\%$ em relação à TARA histórica homologada do ativo. | Bloqueio imediato da liberação da descarga do veículo. | Retenção do selo forense diário até auditoria física do fiscal. |
+| **Parada não Programada** | Telemetria GPS acusa parada $> 8\text{ min}$ fora da rota (Risco de abastecimento de água/lastro). | Desvio de Rota Crítico. Emite alerta obrigatório para pesagem de contraprova na balança mais próxima. | Tarja vermelha de Não-Conformidade Operacional no Painel City. |
+| **Amostragem Sorteada** | Gatilho algorítmico aleatório disparado na saída do Pátio da Concessionária. | Obriga o condutor a realizar uma pesagem em vazio de aferição zero de calibração periódica. | Requisito obrigatório para manutenção do Índice de Confiança. |
+
+---
+
+## 3. Algoritmo Forense de Validação de Massa ($M_{\text{real}}$)
+
+Para fins deHandshake Fiscal com a SEFAZ e homologação do balanço de massa real que gerará os créditos climáticos, a massa real recuperada é auditada dinamicamente através da seguinte equação matemática integrada aos smart contracts:
+
+$$M_{\text{real}} = M_{\text{bruto}} - T_{\text{dinâmica}}$$
+
+Onde a TARA Dinâmica ($T_{\text{dinâmica}}$) é calculada considerando:
+
+$$T_{\text{dinâmica}} = T_{\text{base}} \pm \Delta_{\text{combustível}} + V_{\text{chorume}}$$
+
+> ⚠️ **Regra de Ouro Antifraude:** Se $M_{\text{real}}$ apresentar inconsistência taxonômica com o volume cúbico estimado pela câmera volumétrica da moega, o sistema derruba o status de conformidade da rota, gerando uma quebra irreversível no log de auditoria do gestor.
 
 
 

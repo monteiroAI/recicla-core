@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>mrvTRUST Concessionária - Governança Operacional</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .header { background-color: #1e293b; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 20px; }
+        .badge { padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .badge-master { background-color: #10b981; color: white; }
+        .badge-simulator { background-color: #f59e0b; color: white; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; }
+        h2 { border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 0; color: #0f172a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { text-align: left; padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        table th { background-color: #f8fafc; color: #64748b; }
+        .status-active { color: #10b981; font-weight: bold; }
+        .status-pending { color: #f59e0b; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1 style="margin: 0; font-size: 24px;">mrvTRUST // Módulo Dealership</h1>
+            <small>Monitoramento Operacional em Tempo Real</small>
+        </div>
+        <div id="node-environment-seal" class="badge badge-master">mrvTRUST MASTER NODE</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Missões Operacionais Ativas</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Missão</th>
+                        <th>Operador (Campo)</th>
+                        <th>Rota / Trajetória</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="missions-table-body">
+                    <tr>
+                        <td>#MIS-2026-001</td>
+                        <td>Carlos Silva (Mobile Camada 2)</td>
+                        <td>Zona Industrial -> Hub Central</td>
+                        <td><span class="status-active">Em Andamento</span></td>
+                    </tr>
+                    <tr>
+                        <td>#MIS-2026-002</td>
+                        <td>Ana Souza (Coleta Forense)</td>
+                        <td>Ecoponto Sul -> Triagem</td>
+                        <td><span class="status-pending">Aguardando GPS</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Status e Telemetria da Frota</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Veículo / Placa</th>
+                        <th>Velocidade</th>
+                        <th>Carga Atual</th>
+                        <th>Último Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="vehicles-table-body">
+                    <tr>
+                        <td>Caminhão 04 (ABC-1234)</td>
+                        <td>42 km/h</td>
+                        <td>3.4 Ton</td>
+                        <td>Justo agora</td>
+                    </tr>
+                    <tr>
+                        <td>Compactador 01 (XYZ-9876)</td>
+                        <td>0 km/h (Parado)</td>
+                        <td>1.2 Ton</td>
+                        <td>Há 3 min</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Lógica de validação do data.schema para atualização do selo de ambiente
+        function sincronizarDadosDealership(data) {
+            const seal = document.getElementById('node-environment-seal');
+            
+            if (data && data.schema === 'simulator') {
+                seal.textContent = 'AMBIENTE SIMULATOR';
+                seal.className = 'badge badge-simulator';
+            } else {
+                seal.textContent = 'mrvTRUST MASTER NODE';
+                seal.className = 'badge badge-master';
+            }
+
+            // Injeção dinâmica dos dados operacionais se fornecidos pelo backend
+            if (data && data.missoes) {
+                renderizarMissoes(data.missoes);
+            }
+            if (data && data.veiculos) {
+                renderizarVeiculos(data.veiculos);
+            }
+        }
+
+        function renderizarMissoes(missoes) {
+            const tbody = document.getElementById('missions-table-body');
+            tbody.innerHTML = missoes.map(m => `
+                <tr>
+                    <td>${m.id}</td>
+                    <td>${m.operador}</td>
+                    <td>${m.trajetoria}</td>
+                    <td><span class="${m.status === 'Ativa' ? 'status-active' : 'status-pending'}">${m.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarVeiculos(veiculos) {
+            const tbody = document.getElementById('vehicles-table-body');
+            tbody.innerHTML = veiculos.map(v => `
+                <tr>
+                    <td>${v.nome}</td>
+                    <td>${v.velocidade}</td>
+                    <td>${v.carga}</td>
+                    <td>${v.timestamp}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Exemplo de escuta de eventos (WebSocket ou SSE) vinda do seu simulador/backbone
+        // window.addEventListener('message', (event) => sincronizarDadosDealership(event.data));
+    </script>
+</body>
+</html>

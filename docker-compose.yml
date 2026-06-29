@@ -1,10 +1,9 @@
 # Nome do arquivo e árvore de localização: /docker-compose.yml
 # Função: Orquestrar infraestrutura redirecionando portas externas para evitar colisões no host.
-# Estratégia única: Mapeamento alternativo (8081/8082) blindando o tráfego contra processos zumbis do Linux.
 version: '3.8'
 
 services:
-  # O Banco de Dados
+  # O Banco de Dados - Rodando direto na RAM/CPU (Sem travar com NVIDIA)
   database:
     image: postgres:14
     container_name: recicla-db-1
@@ -31,6 +30,18 @@ services:
       - PORT=3000
       - DATABASE_URL=postgresql://recicla_user:recicla_password@database:5432/recicla
       - SERIAL_PORT=null
+    depends_on:
+      - database
+    networks:
+      - recicla_net
+
+  # O Gerenciador Visual do Banco de Dados
+  adminer:
+    image: adminer:latest
+    container_name: recicla-adminer-1
+    restart: always
+    ports:
+      - "8888:8080"
     depends_on:
       - database
     networks:
